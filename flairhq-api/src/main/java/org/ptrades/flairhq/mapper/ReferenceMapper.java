@@ -12,6 +12,7 @@ import org.ptrades.flairhq.repository.domain.Reference;
 @Mapper(componentModel = "spring")
 public interface ReferenceMapper {
 
+    @Mapping(target = "reciprocalApproved", ignore = true)
     ReferenceResponse toResponse(Reference ref);
 
     default ReferenceResponse toResponse(Reference ref, boolean includePrivateNotes) {
