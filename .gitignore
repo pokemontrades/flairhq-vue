@@ -14,7 +14,7 @@ flairhq-api/.gradle/
 !flairhq-api/**/src/main/**/build/
 !flairhq-api/**/src/test/**/build/
 
- Package Files #
+# Package Files
 *.jar
 *.war
 *.nar
