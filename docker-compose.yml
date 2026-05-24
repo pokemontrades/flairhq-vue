@@ -1,0 +1,82 @@
+services:
+
+  mongodb:
+    image: mongo:8
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+    volumes:
+      - mongodb_data:/data/db
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  api:
+    image: ghcr.io/${GHCR_OWNER}/flairhq-api:latest
+    build:
+      context: ./flairhq-api
+    restart: unless-stopped
+    depends_on:
+      - mongodb
+    environment:
+      # Profile and mode
+      SPRING_PROFILES_ACTIVE: prod
+      FHQ_ENV: prod
+      # Database — points to the mongodb service, not localhost
+      SPRING_DATA_MONGODB_URI: mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongodb:27017/fapp?authSource=admin
+      # Frontend URL (used for CORS and post-login redirect)
+      APP_FRONTEND_URL: ${FRONTEND_URL}
+      # Reddit OAuth2
+      REDDIT_CLIENT_ID: ${REDDIT_CLIENT_ID}
+      REDDIT_CLIENT_SECRET: ${REDDIT_CLIENT_SECRET}
+      REDDIT_ADMIN_REFRESH_TOKEN: ${REDDIT_ADMIN_REFRESH_TOKEN}
+      # Discord
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID}
+      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET}
+      DISCORD_SERVER_ID: ${DISCORD_SERVER_ID}
+      DISCORD_AUTHENTICATED_ROLE_IDS: ${DISCORD_AUTHENTICATED_ROLE_IDS}
+      DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN}
+      # Service-to-service API key
+      SERVICE_API_KEY: ${SERVICE_API_KEY}
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  ui:
+    image: ghcr.io/${GHCR_OWNER}/flairhq-vue:latest
+    build:
+      context: ./flairhq-vue
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  proxy:
+    image: nginx:alpine
+    restart: unless-stopped
+    depends_on:
+      - ui
+      - api
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./certs:/etc/nginx/certs:ro
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  mongodb_data:
