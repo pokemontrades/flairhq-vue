@@ -1,0 +1,143 @@
+.search-view {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.search-meta {
+  font-size: 0.9rem;
+  color: var(--color-text);
+  margin-bottom: 1.5rem;
+}
+
+.result-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.result-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--color-background-soft);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s ease;
+}
+
+.result-row:hover { border-color: var(--color-primary-muted); }
+
+.result-primary {
+  font-weight: 600;
+  color: var(--color-heading);
+  min-width: 140px;
+}
+
+.result-secondary {
+  font-size: 0.9rem;
+  color: var(--color-text);
+}
+
+.result-trade {
+  flex: 1;
+  font-size: 0.9rem;
+  color: var(--color-text);
+}
+
+.result-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.result-date {
+  font-size: 0.8rem;
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
+.log-row { cursor: default; }
+.log-content { flex: 1; }
+
+.modmail-row {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+  cursor: pointer;
+}
+
+.modmail-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.modmail-sub {
+  font-size: 0.85rem;
+  color: var(--color-text);
+  opacity: 0.7;
+}
+
+.modmail-subject {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-heading);
+}
+
+.modmail-body {
+  font-size: 0.875rem;
+  color: var(--color-text);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: pre-wrap;
+}
+
+.badge.mod {
+  background: var(--color-success-tint);
+  color: var(--color-success);
+}
+
+.badge.banned {
+  background: hsla(0, 80%, 60%, 0.15);
+  color: #c53030;
+}
+
+/* Modmail modal header group */
+.modal-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.modal-meta {
+  font-size: 0.8rem;
+  color: var(--color-text);
+  opacity: 0.75;
+}
+
+.mail-body-text {
+  font-family: inherit;
+  font-size: 0.9rem;
+  color: var(--color-text);
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+  line-height: 1.6;
+}
+
+@media (max-width: 560px) {
+  .search-view { padding: 1rem; }
+  .result-row { flex-wrap: wrap; gap: 0.35rem 0.75rem; }
+  .result-primary { min-width: 0; }
+  .result-meta { margin-left: 0; }
+  .result-trade { flex-basis: 100%; }
+}

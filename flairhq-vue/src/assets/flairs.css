@@ -1,0 +1,89 @@
+/* Ball flairs — ballflairs.png spritesheet (24×24 per sprite) */
+.flair-gsball::before, .flair-default::before, .flair-gen2::before,
+.flair-pokeball::before, .flair-premierball::before, .flair-luxuryball::before,
+.flair-dreamball::before, .flair-ovalcharm::before, .flair-greatball::before,
+.flair-ultraball::before, .flair-masterball::before, .flair-cherishball::before,
+.flair-shinycharm::before, .flair-safariball::before,
+.flair-gsball1::before, .flair-pokeball1::before, .flair-premierball1::before,
+.flair-luxuryball1::before, .flair-dreamball1::before, .flair-ovalcharm1::before,
+.flair-greatball1::before, .flair-ultraball1::before, .flair-masterball1::before,
+.flair-cherishball1::before, .flair-shinycharm1::before {
+  content: "";
+  width: 24px;
+  height: 24px;
+  font-size: 0;
+  display: inline-block;
+  background: url("/images/ballflairs.png") no-repeat 0 0;
+  vertical-align: middle;
+  margin: 0 2px 1px 0;
+  pointer-events: none;
+}
+
+.flair-default::before      { background-position:   0px   0px }
+.flair-gen2::before         { background-position:   0px -24px }
+.flair-pokeball::before     { background-position: -24px   0px }
+.flair-pokeball1::before    { background-position: -24px -24px }
+.flair-premierball::before  { background-position: -48px   0px }
+.flair-premierball1::before { background-position: -48px -24px }
+.flair-greatball::before    { background-position: -72px   0px }
+.flair-greatball1::before   { background-position: -72px -24px }
+.flair-ultraball::before    { background-position: -96px   0px }
+.flair-ultraball1::before   { background-position: -96px -24px }
+.flair-luxuryball::before   { background-position: -120px  0px }
+.flair-luxuryball1::before  { background-position: -120px -24px }
+.flair-masterball::before   { background-position: -144px  0px }
+.flair-masterball1::before  { background-position: -144px -24px }
+.flair-dreamball::before    { background-position: -168px  0px }
+.flair-dreamball1::before   { background-position: -168px -24px }
+.flair-cherishball::before  { background-position: -192px  0px }
+.flair-cherishball1::before { background-position: -192px -24px }
+.flair-gsball::before       { background-position: -432px  0px }
+.flair-gsball1::before      { background-position: -432px -24px }
+.flair-ovalcharm::before    { background-position: -456px  0px }
+.flair-ovalcharm1::before   { background-position: -456px -24px }
+.flair-shinycharm::before   { background-position: -480px  0px }
+.flair-shinycharm1::before  { background-position: -480px -24px }
+
+/* Egg flairs — eggflairs.png spritesheet (22×22 per sprite) */
+.flair-lucky::before, .flair-egg::before, .flair-eevee::before,
+.flair-togepi::before, .flair-torchic::before, .flair-pichu::before,
+.flair-manaphy::before, .flair-eggcup::before {
+  content: "";
+  display: inline-block;
+  height: 22px;
+  width: 22px;
+  background: url("/images/eggflairs.png") no-repeat 0 0;
+  vertical-align: middle;
+  margin: 0 2px 1px 0;
+  pointer-events: none;
+}
+
+.flair-lucky::before   { background-position:    0px 0 }
+.flair-egg::before     { background-position:  -22px 0 }
+.flair-eevee::before   { background-position:  -44px 0 }
+.flair-togepi::before  { background-position:  -66px 0 }
+.flair-torchic::before { background-position:  -88px 0 }
+.flair-pichu::before   { background-position: -110px 0 }
+.flair-manaphy::before { background-position: -132px 0 }
+.flair-eggcup::before  { background-position: -154px 0 }
+
+/* Ribbon flairs — ribbonFlairs.png spritesheet (22×22 per sprite) */
+.flair-cuteribbon::after, .flair-coolribbon::after,
+.flair-beautyribbon::after, .flair-smartribbon::after,
+.flair-toughribbon::after {
+  content: "";
+  width: 22px;
+  height: 22px;
+  display: inline-block;
+  background-image: url("/images/ribbonFlairs.png");
+  vertical-align: middle;
+  margin: 0 1px;
+}
+
+.flair-cuteribbon::after   { background-position:   0px 0 }
+.flair-coolribbon::after   { background-position: -22px 0 }
+.flair-beautyribbon::after { background-position: -44px 0 }
+.flair-smartribbon::after  { background-position: -66px 0 }
+.flair-toughribbon::after  { background-position: -88px 0 }
+
+/* Involvement flair has no sprite — text only */

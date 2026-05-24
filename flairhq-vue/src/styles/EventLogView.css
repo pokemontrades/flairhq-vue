@@ -1,0 +1,176 @@
+.event-log {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.total-badge {
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: var(--color-background-soft);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 0.15rem 0.6rem;
+  color: var(--color-text);
+}
+
+.filters {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.filter-input,
+.filter-select {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-background-soft);
+  color: var(--color-text);
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.filter-input { min-width: 200px; }
+.filter-input:focus,
+.filter-select:focus { border-color: var(--color-primary-focus); }
+
+.btn-refresh {
+  padding: 0.4rem 0.85rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.btn-refresh:hover:not(:disabled) { border-color: var(--color-primary-focus); }
+.btn-refresh:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.event-table {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.event-row {
+  display: grid;
+  grid-template-columns: 110px 160px 1fr 180px;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.6rem 1rem;
+  background: var(--color-background-soft);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font-size: 0.875rem;
+}
+
+.header-row {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text);
+  background: transparent;
+  border-color: transparent;
+  padding-bottom: 0.25rem;
+}
+
+.type-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.type-green  { background: var(--color-primary-tint); color: var(--color-primary-dark); }
+.type-blue   { background: hsla(210, 80%, 55%, 0.15);  color: hsla(210, 80%, 38%, 1); }
+.type-red    { background: hsla(0, 80%, 55%, 0.15);    color: hsla(0, 70%, 42%, 1); }
+.type-purple { background: hsla(270, 60%, 55%, 0.15);  color: hsla(270, 60%, 40%, 1); }
+.type-default{ background: var(--color-background-mute); color: var(--color-text); }
+
+.col-content {
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.col-time {
+  font-size: 0.8rem;
+  color: var(--color-text);
+  opacity: 0.7;
+  white-space: nowrap;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.page-info {
+  font-size: 0.85rem;
+  color: var(--color-text);
+  opacity: 0.7;
+}
+
+.page-btns { display: flex; gap: 0.5rem; }
+
+.btn-page {
+  padding: 0.4rem 0.9rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.btn-page:hover:not(:disabled) { border-color: var(--color-primary-focus); }
+.btn-page:disabled { opacity: 0.4; cursor: not-allowed; }
+
+@media (max-width: 640px) {
+  .event-log { padding: 1rem; }
+
+  .toolbar { flex-wrap: wrap; }
+
+  .filters { flex-wrap: wrap; }
+
+  .filter-input { min-width: 0; flex: 1; }
+
+  .header-row { display: none; }
+
+  .event-row {
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+      "type user"
+      "content content"
+      "time time";
+    gap: 0.35rem 0.75rem;
+  }
+
+  .col-type    { grid-area: type; }
+  .col-user    { grid-area: user; }
+  .col-content { grid-area: content; white-space: normal; }
+  .col-time    { grid-area: time; }
+}

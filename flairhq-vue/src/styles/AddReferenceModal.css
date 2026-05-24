@@ -1,0 +1,6 @@
+.field-narrow { max-width: 140px; }
+
+@media (max-width: 480px) {
+  .field-row { grid-template-columns: 1fr; }
+  .field-narrow { max-width: 100%; }
+}

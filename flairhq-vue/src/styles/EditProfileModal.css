@@ -1,0 +1,59 @@
+.intro-textarea { min-height: 100px; }
+
+.char-count {
+  font-size: 0.75rem;
+  color: var(--color-text);
+  text-align: right;
+  opacity: 0.7;
+}
+
+.fc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.fc-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.fc-row .field-input { flex: 1; }
+
+.fc-remove {
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  color: var(--color-text);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.3rem 0.6rem;
+  opacity: 0.6;
+  transition: opacity 0.15s ease, border-color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.fc-remove:hover {
+  opacity: 1;
+  border-color: #e53e3e;
+  color: #e53e3e;
+}
+
+.fc-add {
+  background: none;
+  border: 1px dashed var(--color-border);
+  border-radius: 6px;
+  color: var(--color-text);
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 0.35rem 0.75rem;
+  transition: border-color 0.15s ease, color 0.15s ease;
+  align-self: flex-start;
+}
+
+.fc-add:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary-dark);
+}

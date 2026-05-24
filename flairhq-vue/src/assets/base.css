@@ -1,0 +1,150 @@
+/* ── PokéBall (light) ─────────────────────────────────────── */
+:root,
+[data-theme="pokeball"] {
+  /* Primary */
+  --color-primary: #CC0000;
+  --color-primary-dark: #990000;
+  --color-primary-muted: rgba(204, 0, 0, 0.45);
+  --color-primary-focus: rgba(204, 0, 0, 0.55);
+  --color-primary-tint: rgba(204, 0, 0, 0.1);
+
+  /* Body — warm white */
+  --color-background: #ffffff;
+  --color-background-soft: #F8F5F5;
+  --color-background-mute: #F0EDED;
+  --color-border: rgba(0, 0, 0, 0.12);
+  --color-border-hover: rgba(0, 0, 0, 0.28);
+  --color-heading: #1a1a1a;
+  --color-text: #2c2c2c;
+
+  /* Status */
+  --color-success: #1a7a4a;
+  --color-success-tint: rgba(26, 122, 74, 0.12);
+
+  /* Header — red top, black stripe (the PokéBall split) */
+  --header-bg: #CC0000;
+  --header-stripe: #1a1a1a;
+  --header-text: #ffffff;
+  --header-input-bg: rgba(255, 255, 255, 0.92);
+  --header-input-text: #1a1a1a;
+  --header-input-border: rgba(255, 255, 255, 0.35);
+  --header-input-focus: rgba(255, 255, 255, 0.95);
+  --header-btn-bg: #1a1a1a;
+  --header-btn-text: #ffffff;
+  --header-trigger-border: rgba(255, 255, 255, 0.5);
+  --header-trigger-hover: rgba(255, 255, 255, 0.9);
+
+  --section-gap: 160px;
+}
+
+/* ── Dark Pokédex ─────────────────────────────────────────── */
+[data-theme="pokedex"] {
+  /* Primary — same red accent, lighter dark for text on dark bg */
+  --color-primary: #CC0000;
+  --color-primary-dark: #FF6666;
+  --color-primary-muted: rgba(204, 0, 0, 0.5);
+  --color-primary-focus: rgba(204, 0, 0, 0.65);
+  --color-primary-tint: rgba(204, 0, 0, 0.18);
+
+  /* Body — deep navy */
+  --color-background: #16213e;
+  --color-background-soft: #1a2744;
+  --color-background-mute: #1e2f50;
+  --color-border: rgba(255, 255, 255, 0.1);
+  --color-border-hover: rgba(255, 255, 255, 0.22);
+  --color-heading: #ffffff;
+  --color-text: rgba(255, 255, 255, 0.82);
+
+  /* Status — brighter for dark backgrounds */
+  --color-success: #34d17a;
+  --color-success-tint: rgba(52, 209, 122, 0.15);
+
+  /* Header — very dark navy, red stripe (inverted from pokeball) */
+  --header-bg: #0f1829;
+  --header-stripe: #CC0000;
+  --header-text: #ffffff;
+  --header-input-bg: rgba(255, 255, 255, 0.08);
+  --header-input-text: rgba(255, 255, 255, 0.9);
+  --header-input-border: rgba(255, 255, 255, 0.15);
+  --header-input-focus: rgba(255, 255, 255, 0.4);
+  --header-btn-bg: #CC0000;
+  --header-btn-text: #ffffff;
+  --header-trigger-border: rgba(255, 255, 255, 0.3);
+  --header-trigger-hover: rgba(255, 255, 255, 0.7);
+
+  --section-gap: 160px;
+}
+
+/* ── Porygon ──────────────────────────────────────────────── */
+[data-theme="porygon"] {
+  /* Primary — Porygon's hot-pink body */
+  --color-primary: #C84868;
+  --color-primary-dark: #9E3050;
+  --color-primary-muted: rgba(200, 72, 104, 0.45);
+  --color-primary-focus: rgba(200, 72, 104, 0.55);
+  --color-primary-tint: rgba(200, 72, 104, 0.1);
+
+  /* Body — soft blush white */
+  --color-background: #FEF6F8;
+  --color-background-soft: #F9EDF1;
+  --color-background-mute: #F3E0E7;
+  --color-border: rgba(180, 60, 90, 0.14);
+  --color-border-hover: rgba(180, 60, 90, 0.28);
+  --color-heading: #280C18;
+  --color-text: #3C1824;
+
+  /* Status — Porygon's cyan polygon sections */
+  --color-success: #2888A8;
+  --color-success-tint: rgba(40, 136, 168, 0.12);
+
+  /* Header — pink body, blue polygon stripe */
+  --header-bg: #C84868;
+  --header-stripe: #6888C0;
+  --header-text: #ffffff;
+  --header-input-bg: rgba(255, 255, 255, 0.88);
+  --header-input-text: #280C18;
+  --header-input-border: rgba(255, 255, 255, 0.4);
+  --header-input-focus: rgba(255, 255, 255, 0.95);
+  --header-btn-bg: #6888C0;
+  --header-btn-text: #ffffff;
+  --header-trigger-border: rgba(255, 255, 255, 0.5);
+  --header-trigger-hover: rgba(255, 255, 255, 0.9);
+
+  --section-gap: 160px;
+}
+
+/* ── Reset & Base ─────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  font-weight: normal;
+}
+
+body {
+  min-height: 100vh;
+  color: var(--color-text);
+  background: var(--color-background);
+  transition:
+    color 0.3s,
+    background-color 0.3s;
+  line-height: 1.6;
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    Oxygen,
+    Ubuntu,
+    Cantarell,
+    'Fira Sans',
+    'Droid Sans',
+    'Helvetica Neue',
+    sans-serif;
+  font-size: 15px;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

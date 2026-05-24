@@ -1,0 +1,122 @@
+.modnote-panel {
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid hsla(0, 70%, 55%, 0.25);
+}
+
+.modnote-heading {
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: hsla(0, 70%, 45%, 1);
+  margin: 0 0 0.85rem;
+}
+
+.modnote-error {
+  font-size: 0.85rem;
+  color: #e53e3e;
+  margin: 0.25rem 0 0.75rem;
+}
+
+.modnote-state {
+  font-size: 0.875rem;
+  color: var(--color-text);
+  opacity: 0.6;
+  padding: 0.5rem 0;
+}
+
+.modnote-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.modnote-item {
+  padding: 0.75rem 1rem;
+  background: hsla(0, 70%, 55%, 0.04);
+  border: 1px solid hsla(0, 70%, 55%, 0.18);
+  border-radius: 8px;
+}
+
+.modnote-body {
+  font-size: 0.9rem;
+  color: var(--color-text);
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin-bottom: 0.45rem;
+}
+
+.modnote-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.78rem;
+  color: var(--color-text);
+  opacity: 0.65;
+}
+
+.modnote-author { font-weight: 600; }
+
+.btn-delete-note {
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid hsla(0, 70%, 55%, 0.35);
+  border-radius: 5px;
+  color: hsla(0, 70%, 45%, 1);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.15rem 0.55rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-delete-note:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-delete-note:not(:disabled):hover { background: hsla(0, 70%, 55%, 0.1); }
+
+.modnote-confirm-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: hsla(0, 70%, 45%, 1);
+}
+
+.btn-confirm-yes,
+.btn-confirm-cancel {
+  border-radius: 5px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.15rem 0.55rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-confirm-yes {
+  background: hsla(0, 70%, 50%, 1);
+  border: 1px solid hsla(0, 70%, 50%, 1);
+  color: #fff;
+}
+
+.btn-confirm-yes:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-confirm-yes:not(:disabled):hover { background: hsla(0, 70%, 42%, 1); }
+
+.btn-confirm-cancel {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+}
+
+.btn-confirm-cancel:hover { background: hsla(0, 0%, 50%, 0.1); }
+
+.modnote-pagination { margin-top: 0.75rem; }
+
+.modnote-pagination :deep(.page-btn) {
+  border-color: hsla(0, 70%, 55%, 0.35);
+  color: hsla(0, 70%, 45%, 1);
+}
+
+.modnote-pagination :deep(.page-btn:not(:disabled):hover) {
+  background: hsla(0, 70%, 55%, 0.1);
+}

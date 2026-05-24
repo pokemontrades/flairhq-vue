@@ -1,0 +1,25 @@
+.app-footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 2rem 1rem;
+  margin-top: 3rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.footer-link {
+  font-size: 0.8rem;
+  color: var(--color-text);
+  opacity: 0.5;
+  text-decoration: none;
+  transition: opacity 0.15s ease;
+}
+
+.footer-link:hover { opacity: 0.85; }
+
+.footer-sep {
+  font-size: 0.8rem;
+  color: var(--color-text);
+  opacity: 0.35;
+}

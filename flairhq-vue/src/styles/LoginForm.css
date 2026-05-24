@@ -1,0 +1,64 @@
+.login-form {
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 420px;
+}
+
+.form-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--color-heading);
+  margin-bottom: 0.35rem;
+}
+
+.form-subtitle {
+  font-size: 0.95rem;
+  color: var(--color-text);
+  margin-bottom: 2rem;
+}
+
+.reddit-btn {
+  width: 100%;
+  padding: 0.75rem 1.25rem;
+  background: #ff4500;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  transition: background 0.2s ease;
+}
+
+.reddit-btn:hover {
+  background: #e03d00;
+}
+
+.reddit-icon {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.form-footer {
+  text-align: center;
+  margin-top: 1.5rem;
+  font-size: 0.8rem;
+  color: var(--color-text);
+}
+
+.form-footer a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.form-footer a:hover {
+  text-decoration: underline;
+}

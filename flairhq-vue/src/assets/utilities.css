@@ -1,0 +1,121 @@
+/* ── Form Fields ── */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.field-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-heading);
+}
+
+.field-hint {
+  font-weight: 400;
+  opacity: 0.6;
+  font-size: 0.8rem;
+}
+
+.field-input,
+.field-textarea,
+.field-select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-background-soft);
+  color: var(--color-text);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.15s ease;
+  font-family: inherit;
+}
+
+.field-input:focus,
+.field-textarea:focus,
+.field-select:focus { border-color: var(--color-primary-focus); }
+
+.field-textarea {
+  resize: vertical;
+  min-height: 70px;
+}
+
+.field-select { cursor: pointer; }
+
+/* ── Buttons ── */
+.btn-cancel,
+.btn-save,
+.btn-submit {
+  padding: 0.5rem 1.25rem;
+  border-radius: 7px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.btn-cancel {
+  background: transparent;
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.btn-save,
+.btn-submit {
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+}
+
+.btn-cancel:disabled,
+.btn-save:disabled,
+.btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-cancel:not(:disabled):hover,
+.btn-save:not(:disabled):hover,
+.btn-submit:not(:disabled):hover { opacity: 0.85; }
+
+/* ── State Messages ── */
+.state-msg {
+  text-align: center;
+  color: var(--color-text);
+  padding: 3rem 0;
+  font-size: 0.95rem;
+}
+
+.state-msg.error { color: #e53e3e; }
+
+/* ── Save / Form Errors ── */
+.save-error {
+  color: #e53e3e;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+/* ── User Link ── */
+.user-link {
+  font-weight: 600;
+  color: var(--color-heading);
+  text-decoration: none;
+}
+
+.user-link:hover { color: var(--color-primary-dark); }
+
+/* ── Badge ── */
+.badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+}
+
+.badge.verified {
+  background: var(--color-success-tint);
+  color: var(--color-success);
+}
