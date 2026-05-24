@@ -1,0 +1,24 @@
+# Environment / secrets
+.env
+flairhq-api/src/main/resources/secrets.properties
+
+# SSL certs
+certs/*.pem
+certs/*.key
+
+# API build output
+flairhq-api/build/
+flairhq-api/.gradle/
+
+# Vue build output and local dependencies
+flairhq-vue/node_modules/
+flairhq-vue/dist/
+flairhq-vue/.env
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
