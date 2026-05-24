@@ -1,0 +1,34 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Current File",
+            "request": "launch",
+            "mainClass": "${file}"
+        },
+        {
+            "type": "java",
+            "name": "FlairhqApplication",
+            "request": "launch",
+            "mainClass": "org.ptrades.flairhq.FlairhqApplication",
+            "projectName": "flairhq-api",
+            "env": {
+                "fhq.env": "dev",
+                "db_user": "root",
+                "db_password": "example_password",
+                "reddit_client_id": "",
+                "reddit_client_secret": "",
+                "reddit_admin_refresh_token": "",
+                "discord_client_id":"",
+                "discord_client_secret":"",
+                "discord_server_id":"",
+                "discord_authenticated_role_ids": "",
+                "discord_bot_token":""
+            }
+        }
+    ]
+}
