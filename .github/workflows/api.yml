@@ -1,0 +1,81 @@
+name: API
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "flairhq-api/**"
+      - ".github/workflows/api.yml"
+
+env:
+  IMAGE: ghcr.io/${{ github.repository_owner }}/flairhq-api
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: temurin
+
+      - name: Run unit tests
+        working-directory: flairhq-api
+        run: ./gradlew test
+
+      - name: Upload test report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: flairhq-api/build/reports/tests/test/
+
+  build-and-push:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./flairhq-api
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:latest
+            ${{ env.IMAGE }}:${{ github.sha }}
+
+  # ── Auto-deploy (disabled) ────────────────────────────────────────────────
+  # To enable:
+  #   1. Add repository secrets: DEPLOY_HOST, DEPLOY_USER, DEPLOY_KEY
+  #   2. Uncomment the deploy job below
+  #
+  # deploy:
+  #   needs: build-and-push
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Deploy API to production
+  #       uses: appleboy/ssh-action@v1
+  #       with:
+  #         host: ${{ secrets.DEPLOY_HOST }}
+  #         username: ${{ secrets.DEPLOY_USER }}
+  #         key: ${{ secrets.DEPLOY_KEY }}
+  #         script: |
+  #           cd /opt/flairhq
+  #           docker compose pull api
+  #           docker compose up -d api

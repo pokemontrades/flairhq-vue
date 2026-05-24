@@ -1,0 +1,67 @@
+name: Security (Snyk)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  snyk-api:
+    name: Snyk — API (Gradle)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: temurin
+
+      - name: Install Snyk CLI
+        uses: snyk/actions/setup@master
+
+      - name: Scan dependencies
+        working-directory: flairhq-api
+        run: snyk test --severity-threshold=high
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      - name: Scan code (SAST)
+        working-directory: flairhq-api
+        run: snyk code test --severity-threshold=high
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+  snyk-vue:
+    name: Snyk — Vue (npm)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: flairhq-vue/package-lock.json
+
+      - name: Install dependencies
+        working-directory: flairhq-vue
+        run: npm ci
+
+      - name: Install Snyk CLI
+        uses: snyk/actions/setup@master
+
+      - name: Scan dependencies
+        working-directory: flairhq-vue
+        run: snyk test --severity-threshold=high
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      - name: Scan code (SAST)
+        working-directory: flairhq-vue
+        run: snyk code test --severity-threshold=high
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
