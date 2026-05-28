@@ -1,0 +1,49 @@
+INSTRUCTIONS
+
+mongoimport \
+  --uri "mongodb://localhost:27017/flairhq" \
+  --collection rejectionReason \
+  --jsonArray \
+  --file flairhq-mongo/rejection-reasons-seed.json
+The collection name is rejectionReason — that's what Spring Data MongoDB derives from the RejectionReason class name by default. Adjust the URI/database name if yours differs.
+
+
+
+[
+  {
+    "label": "Wrong Permalink",
+    "reason": "Wrong permalink. Please make sure to link to the beginning of the trade negotiation. This should be a base level comment. Not the post, not a random comment in the chain, and not the agreement comment.",
+    "createdAt": { "$date": "2026-05-22T00:00:00.000Z" },
+    "updatedAt": { "$date": "2026-05-22T00:00:00.000Z" }
+  },
+  {
+    "label": "No Offer or Request",
+    "reason": "You or the other trader did not ask or offer anything in return. See our wiki post [What counts as a trade](https://wk.reddit.com/r/pokemontrades/wiki/pokeballflair/#wiki_what_counts_as_a_trade) \"Both users must ask for and receive something in return.\"",
+    "createdAt": { "$date": "2026-05-22T00:00:00.000Z" },
+    "updatedAt": { "$date": "2026-05-22T00:00:00.000Z" }
+  },
+  {
+    "label": "Trade in Giveaway",
+    "reason": "Trade took place in a Giveaway. Reference the second bullet under Requirements in our [Contests and Giveaways](https://wk.reddit.com/r/pokemontrades/wiki/pokeballflair/#wiki_what_counts_as_a_trade) wiki post. \"Do not conduct regular trades in contest/giveaway threads. If you want to trade some of the Pokémon you're giving away, make a separate trade thread.\" Please remove this trade from your profile or move it to the Miscellaneous category if you'd like to maintain record of it.",
+    "createdAt": { "$date": "2026-05-22T00:00:00.000Z" },
+    "updatedAt": { "$date": "2026-05-22T00:00:00.000Z" }
+  },
+  {
+    "label": "Flair Grinding",
+    "reason": "This trade is considered Flair Grinding. Trades made as low effort for the sole purpose of adding references for flair are not allowed. Both users must act in good faith and benefit from the trade. Please remove this trade from your profile.",
+    "createdAt": { "$date": "2026-05-22T00:00:00.000Z" },
+    "updatedAt": { "$date": "2026-05-22T00:00:00.000Z" }
+  },
+  {
+    "label": "Rule Violation",
+    "reason": "This trade is associated with a rule violation. Please review the Moderator comments in the thread and respond appropriately. If this is an unresolvable violation, please remove this trade from your profile.",
+    "createdAt": { "$date": "2026-05-22T00:00:00.000Z" },
+    "updatedAt": { "$date": "2026-05-22T00:00:00.000Z" }
+  },
+  {
+    "label": "Multiple Trades, Same Thread",
+    "reason": "Multiple trades with the same person in the same thread. Please reference our Flair Guide section on [trading multiple Pokémon at the same time](https://wk.reddit.com/r/pokemontrades/wiki/pokeballflair/#wiki_on_trading_multiple_pok.E9mon_at_the_same_time). Essentially 1 post with 1 person = 1 trade, even if multiple trades happen with that person. But to be clear, if you traded with 3 different people in a post, that can be 3 different trades. Only one of these trades will have been counted towards flair.",
+    "createdAt": { "$date": "2026-05-22T00:00:00.000Z" },
+    "updatedAt": { "$date": "2026-05-22T00:00:00.000Z" }
+  }
+]
