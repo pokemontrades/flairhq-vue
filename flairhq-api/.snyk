@@ -1,0 +1,11 @@
+# Snyk policy file
+version: v1.25.0
+ignore:
+  SNYK-JAVA-ORGAPACHETOMCATEMBED-16643259:
+    - '*':
+        reason: No fix available in Tomcat 10.x / Spring Boot 3.x; requires Spring Boot 4.0 upgrade
+        expires: '2027-01-01T00:00:00.000Z'
+  SNYK-JAVA-ORGAPACHETOMCATEMBED-16691231:
+    - '*':
+        reason: No fix available in Tomcat 10.x / Spring Boot 3.x; requires Spring Boot 4.0 upgrade
+        expires: '2027-01-01T00:00:00.000Z'

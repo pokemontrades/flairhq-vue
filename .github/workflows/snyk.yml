@@ -62,6 +62,6 @@ jobs:
 
       - name: Scan code (SAST)
         working-directory: flairhq-vue
-        run: snyk code test --severity-threshold=high
+        run: snyk code test --severity-threshold=high --exclude=node_modules
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
