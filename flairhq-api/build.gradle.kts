@@ -1,7 +1,7 @@
 plugins {
     java
 
-	id("org.springframework.boot") version "3.5.3"
+	id("org.springframework.boot") version "3.5.14"
 	id("io.spring.dependency-management") version "1.1.7"
 	id("org.asciidoctor.jvm.convert") version "3.3.2"
 }
@@ -42,7 +42,7 @@ dependencies {
 	implementation("org.springframework.session:spring-session-data-mongodb")
 
 	// Swagger API documentation
-	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9")
+	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.17")
 
 	runtimeOnly("io.micrometer:micrometer-registry-prometheus")
 
