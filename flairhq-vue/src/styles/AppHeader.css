@@ -78,9 +78,25 @@
 .search-btn:hover { opacity: 0.85; }
 
 /* Desktop user menu */
+.theme-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--header-trigger-border);
+  border-radius: 6px;
+  color: var(--header-text);
+  padding: 0.3rem 0.5rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-left: auto;
+  transition: border-color 0.15s ease, opacity 0.15s ease;
+}
+
+.theme-btn:hover { border-color: var(--header-trigger-hover); opacity: 0.85; }
+
 .user-menu {
   position: relative;
-  margin-left: auto;
   flex-shrink: 0;
 }
 
@@ -322,11 +338,16 @@
   .user-menu      { display: none; }
   .view-as-banner { display: none; }
 
+  .theme-btn {
+    order: 2;
+    margin-left: auto;
+  }
+
   /* Show hamburger, push it to the right */
   .hamburger-btn {
     display: flex;
-    order: 2;
-    margin-left: auto;
+    order: 3;
+    margin-left: 0;
   }
 
   .search-form {

@@ -2,7 +2,7 @@
 import { ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
-import { useThemeStore } from '../stores/theme'
+import { useThemeStore, THEME_LABELS } from '../stores/theme'
 import type { SearchType } from '../stores/search'
 import NavMenuItems from './NavMenuItems.vue'
 
@@ -84,6 +84,27 @@ async function handleLogout() {
 
     <span v-if="auth.viewAsUser" class="view-as-banner">Viewing as user</span>
 
+    <button
+      class="theme-btn"
+      :title="`Theme: ${THEME_LABELS[themeStore.theme]}`"
+      @click="switchTheme"
+    >
+      <!-- Pokéball -->
+      <svg v-if="themeStore.theme === 'pokeball'" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+        <circle cx="8" cy="8" r="6.5"/>
+        <line x1="1.5" y1="8" x2="14.5" y2="8"/>
+        <circle cx="8" cy="8" r="2" fill="currentColor" stroke="none"/>
+      </svg>
+      <!-- Moon -->
+      <svg v-else-if="themeStore.theme === 'pokedex'" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+        <path d="M14 10.5A6 6 0 0 1 5.5 2a6.5 6.5 0 1 0 8.5 8.5z"/>
+      </svg>
+      <!-- Hexagon -->
+      <svg v-else-if="themeStore.theme === 'porygon'" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true">
+        <polygon points="8,1.5 13.5,4.75 13.5,11.25 8,14.5 2.5,11.25 2.5,4.75"/>
+      </svg>
+    </button>
+
     <!-- Desktop user menu -->
     <div class="user-menu" @focusout="onMenuBlur">
       <button class="user-trigger" :class="{ 'viewing-as': auth.viewAsUser }" @click="menuOpen = !menuOpen">
@@ -95,7 +116,6 @@ async function handleLogout() {
         <NavMenuItems
           variant="dropdown"
           @close="menuOpen = false"
-          @switch-theme="switchTheme"
           @toggle-view-as="toggleViewAs"
           @logout="handleLogout"
         />
@@ -125,8 +145,7 @@ async function handleLogout() {
           <NavMenuItems
             variant="sidebar"
             @close="sidebarOpen = false"
-            @switch-theme="switchTheme"
-            @toggle-view-as="toggleViewAs"
+              @toggle-view-as="toggleViewAs"
             @logout="handleLogout"
           />
         </nav>

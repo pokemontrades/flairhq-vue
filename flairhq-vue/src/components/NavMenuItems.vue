@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useAuthStore } from '../stores/auth'
-import { useThemeStore } from '../stores/theme'
 
 const props = defineProps<{
   variant: 'dropdown' | 'sidebar'
@@ -9,12 +8,10 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'close'): void
   (e: 'logout'): void
-  (e: 'switchTheme'): void
   (e: 'toggleViewAs'): void
 }>()
 
-const auth       = useAuthStore()
-const themeStore = useThemeStore()
+const auth = useAuthStore()
 
 function itemClass(modifier?: string) {
   const base = props.variant === 'dropdown' ? 'dropdown-item' : 'sidebar-item'
@@ -34,9 +31,6 @@ function dividerClass() {
 
   <div :class="dividerClass()" />
 
-  <button :class="itemClass('theme')" @click="emit('switchTheme')">
-    {{ themeStore.nextThemeLabel }}
-  </button>
   <button
     v-if="auth.user?.isMod"
     :class="itemClass('toggle')"
