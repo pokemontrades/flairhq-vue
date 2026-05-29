@@ -62,8 +62,6 @@ jobs:
 
       - name: Scan code (SAST)
         working-directory: flairhq-vue
-        run: snyk code test --severity-threshold=high
+        run: snyk code test --severity-threshold=high --org=pokemontrades -d
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          args: --code --org=pokemontrades -d
