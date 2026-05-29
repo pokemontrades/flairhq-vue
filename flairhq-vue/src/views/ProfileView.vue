@@ -181,9 +181,15 @@ watch(() => refStore.references, (refs) => {
 
 watch(isMod, (mod) => { if (mod) reasonStore.load() }, { immediate: true })
 
-const approving       = reactive<Set<string>>(new Set())
-const actioning       = reactive<Set<string>>(new Set())
-const openMenuId      = ref<string | null>(null)
+const approving         = reactive<Set<string>>(new Set())
+const actioning         = reactive<Set<string>>(new Set())
+const openMenuId        = ref<string | null>(null)
+const expandedReasons   = reactive<Set<string>>(new Set())
+
+function toggleReason(id: string) {
+  if (expandedReasons.has(id)) expandedReasons.delete(id)
+  else expandedReasons.add(id)
+}
 const mustFixTargetId  = ref<string | null>(null)
 const mustFixReason    = ref('')
 const rejectTargetId   = ref<string | null>(null)
@@ -471,8 +477,8 @@ function onFlairTextSaved() {
               <span class="ref-meta">
                 <span
                   v-if="ref.mustFix && (isMod || isOwnProfile)"
-                  class="badge must-fix-badge"
-                  :title="ref.mustFixReason ?? undefined"
+                  class="badge must-fix-badge reason-badge"
+                  @click.stop="toggleReason(ref.id)"
                 >must fix</span>
                 <span v-else-if="ref.verified"                       class="badge verified">verified</span>
                 <span v-else-if="isMod && ref.approved"                               class="badge approved">approved</span>
@@ -520,6 +526,10 @@ function onFlairTextSaved() {
                   </template>
                 </template>
               </span>
+              <span
+                v-if="expandedReasons.has(ref.id) && ref.mustFix && (isMod || isOwnProfile)"
+                class="ref-reason-line"
+              >{{ ref.mustFixReason ?? 'No reason provided' }}</span>
             </div>
           </div>
         </template>
@@ -552,8 +562,11 @@ function onFlairTextSaved() {
             <span v-if="ref.gave || ref.got" class="ref-trade">{{ ref.gave }} → {{ ref.got }}</span>
           </a>
           <span class="ref-meta">
-            <span class="badge rejected-badge" :title="ref.rejectedReason ?? undefined">rejected</span>
+            <span class="badge rejected-badge reason-badge" @click.stop="toggleReason(ref.id)">rejected</span>
             <span class="ref-date">{{ formatDate(ref.createdAt) }}</span>
+          </span>
+          <span v-if="expandedReasons.has(ref.id)" class="ref-reason-line">
+            {{ ref.rejectedReason ?? 'No reason provided' }}
           </span>
         </div>
       </div>
