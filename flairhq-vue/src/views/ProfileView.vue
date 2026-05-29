@@ -14,6 +14,7 @@ import FlairApplyModal from '../components/FlairApplyModal.vue'
 import FlairTextModal from '../components/FlairTextModal.vue'
 import ReasonModal from '../components/ReasonModal.vue'
 import ModnotePanel from '../components/ModnotePanel.vue'
+import PokeBallSpinner from '../components/PokeBallSpinner.vue'
 
 interface UserProfile {
   iconImg: string | null
@@ -430,7 +431,7 @@ function onFlairTextSaved() {
       </div>
     </section>
 
-    <div v-if="refStore.loading" class="state-msg">Loading references...</div>
+    <PokeBallSpinner v-if="refStore.loading" />
     <div v-else-if="refStore.error" class="state-msg error">{{ refStore.error }}</div>
     <div v-else-if="totalRefs === 0" class="state-msg">No references yet.</div>
 
