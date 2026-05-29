@@ -552,7 +552,7 @@ function onFlairTextSaved() {
             <span v-if="ref.gave || ref.got" class="ref-trade">{{ ref.gave }} → {{ ref.got }}</span>
           </a>
           <span class="ref-meta">
-            <span class="badge rejected-badge">rejected</span>
+            <span class="badge rejected-badge" :title="ref.rejectedReason ?? undefined">rejected</span>
             <span class="ref-date">{{ formatDate(ref.createdAt) }}</span>
           </span>
         </div>
