@@ -2,7 +2,8 @@
 import { ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
-import { useThemeStore, THEME_LABELS } from '../stores/theme'
+import { useThemeStore, THEME_LABELS, THEME_CYCLE } from '../stores/theme'
+import type { Theme } from '../stores/theme'
 import type { SearchType } from '../stores/search'
 import NavMenuItems from './NavMenuItems.vue'
 
@@ -14,6 +15,7 @@ const themeStore = useThemeStore()
 const query       = ref((route.query.q as string) || '')
 const searchType  = ref<SearchType>((route.query.type as SearchType) || 'users')
 const menuOpen    = ref(false)
+const themeOpen   = ref(false)
 const sidebarOpen = ref(false)
 
 watch(() => route.query, (q) => {
@@ -41,14 +43,21 @@ function onMenuBlur(e: FocusEvent) {
   if (!related?.closest('.user-menu')) menuOpen.value = false
 }
 
-function closeMenus() {
+function onThemeBlur(e: FocusEvent) {
+  const related = e.relatedTarget as HTMLElement | null
+  if (!related?.closest('.theme-menu')) themeOpen.value = false
+}
+
+function selectTheme(t: Theme) {
+  themeStore.setTheme(t)
+  themeOpen.value   = false
   menuOpen.value    = false
   sidebarOpen.value = false
 }
 
-function switchTheme() {
-  themeStore.toggle()
-  closeMenus()
+function closeMenus() {
+  menuOpen.value    = false
+  sidebarOpen.value = false
 }
 
 function toggleViewAs() {
@@ -84,26 +93,47 @@ async function handleLogout() {
 
     <span v-if="auth.viewAsUser" class="view-as-banner">Viewing as user</span>
 
-    <button
-      class="theme-btn"
-      :title="`Theme: ${THEME_LABELS[themeStore.theme]}`"
-      @click="switchTheme"
-    >
-      <!-- Pokéball -->
-      <svg v-if="themeStore.theme === 'pokeball'" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
-        <circle cx="8" cy="8" r="6.5"/>
-        <line x1="1.5" y1="8" x2="14.5" y2="8"/>
-        <circle cx="8" cy="8" r="2" fill="currentColor" stroke="none"/>
-      </svg>
-      <!-- Moon -->
-      <svg v-else-if="themeStore.theme === 'pokedex'" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-        <path d="M14 10.5A6 6 0 0 1 5.5 2a6.5 6.5 0 1 0 8.5 8.5z"/>
-      </svg>
-      <!-- Hexagon -->
-      <svg v-else-if="themeStore.theme === 'porygon'" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true">
-        <polygon points="8,1.5 13.5,4.75 13.5,11.25 8,14.5 2.5,11.25 2.5,4.75"/>
-      </svg>
-    </button>
+    <div class="theme-menu" @focusout="onThemeBlur">
+      <button
+        class="theme-trigger"
+        :title="`Theme: ${THEME_LABELS[themeStore.theme]}`"
+        @click="themeOpen = !themeOpen"
+      >
+        <svg v-if="themeStore.theme === 'pokeball'" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+          <circle cx="8" cy="8" r="6.5"/>
+          <line x1="1.5" y1="8" x2="14.5" y2="8"/>
+          <circle cx="8" cy="8" r="2" fill="currentColor" stroke="none"/>
+        </svg>
+        <svg v-else-if="themeStore.theme === 'pokedex'" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+          <path d="M14 10.5A6 6 0 0 1 5.5 2a6.5 6.5 0 1 0 8.5 8.5z"/>
+        </svg>
+        <svg v-else-if="themeStore.theme === 'porygon'" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true">
+          <polygon points="8,1.5 13.5,4.75 13.5,11.25 8,14.5 2.5,11.25 2.5,4.75"/>
+        </svg>
+      </button>
+      <div v-if="themeOpen" class="theme-dropdown">
+        <button
+          v-for="t in THEME_CYCLE"
+          :key="t"
+          class="theme-option"
+          :class="{ active: themeStore.theme === t }"
+          @click="selectTheme(t)"
+        >
+          <svg v-if="t === 'pokeball'" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+            <circle cx="8" cy="8" r="6.5"/>
+            <line x1="1.5" y1="8" x2="14.5" y2="8"/>
+            <circle cx="8" cy="8" r="2" fill="currentColor" stroke="none"/>
+          </svg>
+          <svg v-else-if="t === 'pokedex'" width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+            <path d="M14 10.5A6 6 0 0 1 5.5 2a6.5 6.5 0 1 0 8.5 8.5z"/>
+          </svg>
+          <svg v-else-if="t === 'porygon'" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true">
+            <polygon points="8,1.5 13.5,4.75 13.5,11.25 8,14.5 2.5,11.25 2.5,4.75"/>
+          </svg>
+          {{ THEME_LABELS[t] }}
+        </button>
+      </div>
+    </div>
 
     <!-- Desktop user menu -->
     <div class="user-menu" @focusout="onMenuBlur">

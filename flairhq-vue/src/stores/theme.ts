@@ -9,7 +9,7 @@ export const THEME_LABELS: Record<Theme, string> = {
   porygon:  'Porygon',
 }
 
-const THEME_CYCLE: Theme[] = ['pokeball', 'pokedex', 'porygon']
+export const THEME_CYCLE: Theme[] = ['pokeball', 'pokedex', 'porygon']
 
 export const useThemeStore = defineStore('theme', () => {
   const theme = ref<Theme>((localStorage.getItem('fhq-theme') as Theme) ?? 'pokeball')
@@ -20,15 +20,5 @@ export const useThemeStore = defineStore('theme', () => {
     document.documentElement.setAttribute('data-theme', t)
   }
 
-  function toggle() {
-    const idx = THEME_CYCLE.indexOf(theme.value)
-    setTheme(THEME_CYCLE[(idx + 1) % THEME_CYCLE.length])
-  }
-
-  const nextThemeLabel = computed(() => {
-    const idx = THEME_CYCLE.indexOf(theme.value)
-    return THEME_LABELS[THEME_CYCLE[(idx + 1) % THEME_CYCLE.length]]
-  })
-
-  return { theme, setTheme, toggle, nextThemeLabel }
+  return { theme, setTheme }
 })
