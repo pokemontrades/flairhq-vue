@@ -34,13 +34,41 @@ class ReferenceProcessorTest {
     // ── add ──────────────────────────────────────────────────────────────────
 
     @Test
-    void add_duplicateUrl_throwsBadRequest() {
+    void add_nullUrl_throwsBadRequest() {
         ReferenceRequest request = new ReferenceRequest();
-        request.setUrl("https://reddit.com/r/sub/comments/abc/");
 
-        when(urlNormalizer.normalize(request.getUrl())).thenReturn("https://reddit.com/r/sub/comments/abc/");
-        when(referenceRepository.findByUserAndUrl("alice", "https://reddit.com/r/sub/comments/abc/"))
-                .thenReturn(List.of(new Reference()));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> processor.add(request, "alice"));
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+    }
+
+    @Test
+    void add_blankUrl_throwsBadRequest() {
+        ReferenceRequest request = new ReferenceRequest();
+        request.setUrl("   ");
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> processor.add(request, "alice"));
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+    }
+
+    @Test
+    void add_wrongSubredditUrl_throwsBadRequest() {
+        ReferenceRequest request = new ReferenceRequest();
+        request.setUrl("https://www.reddit.com/r/pokemon/comments/abc/");
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> processor.add(request, "alice"));
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+    }
+
+    @Test
+    void add_duplicateUrl_throwsBadRequest() {
+        String url = "https://www.reddit.com/r/pokemontrades/comments/abc/";
+        ReferenceRequest request = makeCasualRequest(url);
+
+        when(urlNormalizer.normalize(url)).thenReturn(url);
+        when(referenceRepository.findByUserAndUrl("alice", url)).thenReturn(List.of(new Reference()));
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> processor.add(request, "alice"));
@@ -49,12 +77,11 @@ class ReferenceProcessorTest {
 
     @Test
     void add_uniqueUrl_savesAndReturnsResponse() {
-        ReferenceRequest request = new ReferenceRequest();
-        request.setUrl("https://reddit.com/r/sub/comments/abc/");
-        String normalized = "https://reddit.com/r/sub/comments/abc/";
+        String url = "https://www.reddit.com/r/pokemontrades/comments/abc/";
+        ReferenceRequest request = makeCasualRequest(url);
 
-        when(urlNormalizer.normalize(request.getUrl())).thenReturn(normalized);
-        when(referenceRepository.findByUserAndUrl("alice", normalized)).thenReturn(List.of());
+        when(urlNormalizer.normalize(url)).thenReturn(url);
+        when(referenceRepository.findByUserAndUrl("alice", url)).thenReturn(List.of());
 
         Reference saved = new Reference();
         saved.setId("ref1");
@@ -72,38 +99,38 @@ class ReferenceProcessorTest {
 
     @Test
     void edit_notFound_throwsNotFound() {
+        String url = "https://www.reddit.com/r/pokemontrades/comments/abc/";
         when(referenceRepository.findById("ref1")).thenReturn(Optional.empty());
 
         assertThrows(ResponseStatusException.class,
-                () -> processor.edit("ref1", new ReferenceRequest(), "alice"));
+                () -> processor.edit("ref1", makeCasualRequest(url), "alice"));
     }
 
     @Test
     void edit_wrongOwner_throwsForbidden() {
+        String url = "https://www.reddit.com/r/pokemontrades/comments/abc/";
         Reference ref = makeRef("ref1", "bob", "alice");
         when(referenceRepository.findById("ref1")).thenReturn(Optional.of(ref));
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
-                () -> processor.edit("ref1", new ReferenceRequest(), "alice"));
+                () -> processor.edit("ref1", makeCasualRequest(url), "alice"));
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
     }
 
     @Test
     void edit_ownRef_resetsApprovalFlags() {
+        String url = "https://www.reddit.com/r/pokemontrades/comments/abc/";
         Reference ref = makeRef("ref1", "alice", "bob");
         ref.setApproved(true);
         ref.setVerified(true);
         ref.setMustFix(true);
         ref.setMustFixReason("old reason");
         when(referenceRepository.findById("ref1")).thenReturn(Optional.of(ref));
-
-        ReferenceRequest request = new ReferenceRequest();
-        request.setUrl("https://reddit.com/r/sub/comments/abc/");
-        when(urlNormalizer.normalize(any())).thenReturn("https://reddit.com/r/sub/comments/abc/");
+        when(urlNormalizer.normalize(url)).thenReturn(url);
         when(referenceRepository.save(ref)).thenReturn(ref);
         when(referenceMapper.toResponse(ref, true)).thenReturn(ReferenceResponse.builder().build());
 
-        processor.edit("ref1", request, "alice");
+        processor.edit("ref1", makeCasualRequest(url), "alice");
 
         assertFalse(ref.getApproved());
         assertFalse(ref.getVerified());
@@ -387,6 +414,16 @@ class ReferenceProcessorTest {
         r.setId(id);
         r.setUser(user);
         r.setUser2(user2);
+        return r;
+    }
+
+    private static ReferenceRequest makeCasualRequest(String url) {
+        ReferenceRequest r = new ReferenceRequest();
+        r.setUrl(url);
+        r.setType(ReferenceType.CASUAL);
+        r.setUser2("bob");
+        r.setGave("pikachu");
+        r.setGot("eevee");
         return r;
     }
 }
