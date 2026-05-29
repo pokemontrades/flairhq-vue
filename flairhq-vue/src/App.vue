@@ -12,7 +12,7 @@ auth.init()
   <AppHeader v-if="auth.isAuthenticated" />
   <RouterView />
   <ToastContainer />
-  <footer class="app-footer">
+  <footer v-if="auth.isAuthenticated" class="app-footer">
     <RouterLink :to="{ name: 'info' }" class="footer-link">About</RouterLink>
     <span class="footer-sep">·</span>
     <RouterLink :to="{ name: 'privacy' }" class="footer-link">Privacy Policy</RouterLink>
