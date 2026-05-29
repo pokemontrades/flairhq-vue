@@ -9,3 +9,7 @@ ignore:
     - '*':
         reason: No fix available in Tomcat 10.x / Spring Boot 3.x; requires Spring Boot 4.0 upgrade
         expires: '2027-01-01T00:00:00.000Z'
+  SNYK-JAVA-ORGAPACHECOMMONS-10734078:
+    - '*':
+        reason: Transitive via springdoc -> swagger-core; no direct upgrade path until swagger-core updates its commons-lang3 constraint
+        expires: '2027-01-01T00:00:00.000Z'
