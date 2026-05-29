@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.ptrades.flairhq.common.ReferenceType;
@@ -21,6 +22,9 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class ReferenceProcessor {
+
+    private static final Pattern SUBREDDIT_PATTERN =
+            Pattern.compile("^https?://(www\\.|old\\.)?reddit\\.com/r/pokemontrades/", Pattern.CASE_INSENSITIVE);
 
     private final ReferenceRepository referenceRepository;
     private final ReferenceMapper     referenceMapper;
@@ -62,6 +66,8 @@ public class ReferenceProcessor {
      * @return
      */
     public ReferenceResponse add(ReferenceRequest request, String username) {
+        validateUrl(request.getUrl());
+        validateRequest(request);
         String normalizedUrl = urlNormalizer.normalize(request.getUrl());
         List<Reference> duplicates = referenceRepository.findByUserAndUrl(username, normalizedUrl);
         if (!duplicates.isEmpty()) {
@@ -80,7 +86,50 @@ public class ReferenceProcessor {
      * @param username
      * @return
      */
+    private void validateUrl(String url) {
+        if (url == null || url.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "URL is required");
+        }
+        if (!SUBREDDIT_PATTERN.matcher(url).find()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "URL must be from the pokemontrades subreddit");
+        }
+    }
+
+    private void validateRequest(ReferenceRequest request) {
+        String type = request.getType();
+        if (type == null || type.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Type is required");
+        }
+
+        boolean isGiveaway = ReferenceType.GIVEAWAY.equals(type);
+        boolean isDescType  = ReferenceType.INVOLVEMENT.equals(type) || ReferenceType.MISC.equals(type);
+        boolean showPartner = !isGiveaway;
+        boolean showGaveGot = !isGiveaway && !isDescType;
+        boolean showDesc    = isGiveaway || isDescType;
+        boolean showNumber  = isGiveaway;
+
+        if (showPartner && (request.getUser2() == null || request.getUser2().isBlank())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Trading partner is required");
+        }
+        if (showGaveGot) {
+            if (request.getGave() == null || request.getGave().isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "\"Gave\" is required");
+            }
+            if (request.getGot() == null || request.getGot().isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "\"Got\" is required");
+            }
+        }
+        if (showDesc && (request.getDescription() == null || request.getDescription().isBlank())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Description is required");
+        }
+        if (showNumber && (request.getNumber() == null || request.getNumber() <= 0)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Number given must be at least 1");
+        }
+    }
+
     public ReferenceResponse edit(String id, ReferenceRequest request, String username) {
+        validateUrl(request.getUrl());
+        validateRequest(request);
         Reference ref = referenceRepository.findById(Objects.requireNonNull(id))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         if (!ref.getUser().equals(username)) {

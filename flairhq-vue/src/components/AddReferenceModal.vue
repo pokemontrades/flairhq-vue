@@ -34,30 +34,48 @@ const error   = ref<string | null>(null)
 
 const SUBREDDIT_URL = /^https?:\/\/(www\.|old\.)?reddit\.com\/r\/pokemontrades\//i
 
-const urlError = computed(() => {
+const isGiveaway  = computed(() => form.value.type === 'giveaway')
+const isDescType  = computed(() => form.value.type === 'involvement' || form.value.type === 'misc')
+const showPartner = computed(() => !isGiveaway.value)
+const showGaveGot = computed(() => !isGiveaway.value && !isDescType.value)
+const showDesc    = computed(() => isGiveaway.value || isDescType.value)
+const showNumber  = computed(() => isGiveaway.value)
+
+const touched    = ref(false)
+const urlTouched = ref(false)
+
+const urlError    = computed(() => {
+  if (!urlTouched.value) return null
   const url = form.value.url.trim()
-  if (!url) return null
+  if (!url) return 'URL is required'
   return SUBREDDIT_URL.test(url) ? null : 'URL must be from pokemontrades subreddit'
 })
+const typeError   = computed(() => touched.value && !form.value.type ? 'Type is required' : null)
+const partnerError = computed(() => touched.value && showPartner.value && !form.value.user2.trim() ? 'Trading partner is required' : null)
+const gaveError   = computed(() => touched.value && showGaveGot.value && !form.value.gave.trim() ? 'Required' : null)
+const gotError    = computed(() => touched.value && showGaveGot.value && !form.value.got.trim() ? 'Required' : null)
+const descError   = computed(() => touched.value && showDesc.value && !form.value.description.trim() ? 'Description is required' : null)
+const numberError = computed(() => touched.value && showNumber.value && !(form.value.number > 0) ? 'Must be at least 1' : null)
 
-const isGiveaway    = computed(() => form.value.type === 'giveaway')
-const isDescType    = computed(() => form.value.type === 'involvement' || form.value.type === 'misc')
-const showPartner   = computed(() => !isGiveaway.value)
-const showGaveGot   = computed(() => !isGiveaway.value && !isDescType.value)
-const showDesc      = computed(() => isGiveaway.value || isDescType.value)
-const showNumber    = computed(() => isGiveaway.value)
+const hasErrors = computed(() =>
+  !!(urlError.value || typeError.value || partnerError.value || gaveError.value || gotError.value || descError.value || numberError.value)
+)
 
 watch(() => props.modelValue, (open) => {
   if (open) {
-    form.value  = props.prefill ? { ...defaultForm(), ...props.prefill } : defaultForm()
-    error.value = null
+    form.value       = props.prefill ? { ...defaultForm(), ...props.prefill } : defaultForm()
+    error.value      = null
+    touched.value    = false
+    urlTouched.value = false
   }
 })
 
 function close() { emit('update:modelValue', false) }
 
 async function submit() {
-  if (urlError.value) return
+  touched.value    = true
+  urlTouched.value = true
+  if (hasErrors.value) return
   saving.value = true
   error.value  = null
   try {
@@ -77,8 +95,10 @@ async function submit() {
         number:       showNumber.value   ? (form.value.number      || null) : null,
       }),
     })
-    if (res.status === 400) throw new Error('A reference with that URL already exists.')
-    if (!res.ok) throw new Error(`${res.status}`)
+    if (!res.ok) {
+      const body = await res.json().catch(() => null)
+      throw new Error(body?.message ?? (res.status === 400 ? 'A reference with that URL already exists.' : `Error ${res.status}`))
+    }
     const created: Reference = await res.json()
     emit('added', created)
     close()
@@ -99,42 +119,48 @@ async function submit() {
     <template #body>
       <div class="field">
         <label class="field-label" for="ref-url">Permalink URL</label>
-        <input id="ref-url" v-model="form.url" type="url" class="field-input" :class="{ 'field-input--invalid': urlError }" placeholder="https://reddit.com/r/pokemontrades/comments/…" />
+        <input id="ref-url" v-model="form.url" type="url" class="field-input" :class="{ 'field-input--invalid': urlError }" placeholder="https://reddit.com/r/pokemontrades/comments/…" @blur="urlTouched = true" />
         <p v-if="urlError" class="field-error">{{ urlError }}</p>
       </div>
 
       <div class="field-row">
         <div class="field">
           <label class="field-label" for="ref-type">Type</label>
-          <select id="ref-type" v-model="form.type" class="field-input field-select">
+          <select id="ref-type" v-model="form.type" class="field-input field-select" :class="{ 'field-input--invalid': typeError }">
             <option value="" disabled>Select a type</option>
             <option v-for="{ type, label } in ADDABLE_REFERENCE_CATEGORIES" :key="type" :value="type">{{ label }}</option>
           </select>
+          <p v-if="typeError" class="field-error">{{ typeError }}</p>
         </div>
         <div v-if="showPartner" class="field">
           <label class="field-label" for="ref-partner">Trading Partner</label>
-          <input id="ref-partner" v-model="form.user2" type="text" class="field-input" placeholder="u/username" />
+          <input id="ref-partner" v-model="form.user2" type="text" class="field-input" :class="{ 'field-input--invalid': partnerError }" placeholder="u/username" />
+          <p v-if="partnerError" class="field-error">{{ partnerError }}</p>
         </div>
         <div v-if="showNumber" class="field">
           <label class="field-label" for="ref-number">Number Given</label>
-          <input id="ref-number" v-model.number="form.number" type="number" min="0" class="field-input" />
+          <input id="ref-number" v-model.number="form.number" type="number" min="1" class="field-input" :class="{ 'field-input--invalid': numberError }" />
+          <p v-if="numberError" class="field-error">{{ numberError }}</p>
         </div>
       </div>
 
       <div v-if="showGaveGot" class="field-row">
         <div class="field">
           <label class="field-label" for="ref-gave">Gave</label>
-          <input id="ref-gave" v-model="form.gave" type="text" class="field-input" placeholder="Pokémon you gave" />
+          <input id="ref-gave" v-model="form.gave" type="text" class="field-input" :class="{ 'field-input--invalid': gaveError }" placeholder="Pokémon you gave" />
+          <p v-if="gaveError" class="field-error">{{ gaveError }}</p>
         </div>
         <div class="field">
           <label class="field-label" for="ref-got">Got</label>
-          <input id="ref-got" v-model="form.got" type="text" class="field-input" placeholder="Pokémon you received" />
+          <input id="ref-got" v-model="form.got" type="text" class="field-input" :class="{ 'field-input--invalid': gotError }" placeholder="Pokémon you received" />
+          <p v-if="gotError" class="field-error">{{ gotError }}</p>
         </div>
       </div>
 
       <div v-if="showDesc" class="field">
         <label class="field-label" for="ref-description">Description</label>
-        <input id="ref-description" v-model="form.description" type="text" class="field-input" placeholder="Brief description…" />
+        <input id="ref-description" v-model="form.description" type="text" class="field-input" :class="{ 'field-input--invalid': descError }" placeholder="Brief description…" />
+        <p v-if="descError" class="field-error">{{ descError }}</p>
       </div>
 
       <div class="field">
@@ -154,7 +180,7 @@ async function submit() {
 
     <template #footer>
       <button class="btn-cancel" @click="close" :disabled="saving">Cancel</button>
-      <button class="btn-save" @click="submit" :disabled="saving || !!urlError">
+      <button class="btn-save" @click="submit" :disabled="saving || (touched && hasErrors) || !!urlError">
         {{ saving ? 'Submitting…' : 'Submit Reference' }}
       </button>
     </template>
