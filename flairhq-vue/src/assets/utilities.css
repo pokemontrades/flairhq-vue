@@ -41,6 +41,14 @@
 .field-textarea:focus,
 .field-select:focus { border-color: var(--color-primary-focus); }
 
+.field-input--invalid { border-color: #e53e3e !important; }
+
+.field-error {
+  font-size: 0.8rem;
+  color: #e53e3e;
+  margin: 0;
+}
+
 .field-textarea {
   resize: vertical;
   min-height: 70px;

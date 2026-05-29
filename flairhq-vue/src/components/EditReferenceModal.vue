@@ -30,6 +30,14 @@ const form = ref({
 const saving = ref(false)
 const error  = ref<string | null>(null)
 
+const SUBREDDIT_URL = /^https?:\/\/(www\.|old\.)?reddit\.com\/r\/pokemontrades\//i
+
+const urlError = computed(() => {
+  const url = form.value.url.trim()
+  if (!url) return null
+  return SUBREDDIT_URL.test(url) ? null : 'URL must be from pokemontrades subreddit'
+})
+
 const isGiveaway  = computed(() => form.value.type === 'giveaway')
 const isDescType  = computed(() => form.value.type === 'involvement' || form.value.type === 'misc')
 const showPartner = computed(() => !isGiveaway.value)
@@ -58,7 +66,7 @@ watch(() => props.modelValue, (open) => {
 function close() { emit('update:modelValue', false) }
 
 async function save() {
-  if (!props.reference) return
+  if (!props.reference || urlError.value) return
   saving.value = true
   error.value  = null
   try {
@@ -103,7 +111,8 @@ async function save() {
     <template #body>
       <div class="field">
         <label class="field-label" for="ref-url">Permalink URL</label>
-        <input id="ref-url" v-model="form.url" type="url" class="field-input" placeholder="https://reddit.com/r/…" />
+        <input id="ref-url" v-model="form.url" type="url" class="field-input" :class="{ 'field-input--invalid': urlError }" placeholder="https://reddit.com/r/pokemontrades/comments/…" />
+        <p v-if="urlError" class="field-error">{{ urlError }}</p>
       </div>
 
       <div class="field-row">
@@ -156,7 +165,7 @@ async function save() {
 
     <template #footer>
       <button class="btn-cancel" @click="close" :disabled="saving">Cancel</button>
-      <button class="btn-save" @click="save" :disabled="saving">
+      <button class="btn-save" @click="save" :disabled="saving || !!urlError">
         {{ saving ? 'Saving…' : 'Save Changes' }}
       </button>
     </template>
