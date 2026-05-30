@@ -433,7 +433,11 @@ function onFlairTextSaved() {
 
     <PokeBallSpinner v-if="refStore.loading" />
     <div v-else-if="refStore.error" class="state-msg error">{{ refStore.error }}</div>
-    <div v-else-if="totalRefs === 0" class="state-msg">No references yet.</div>
+    <div v-else-if="totalRefs === 0" class="state-msg">
+      No references yet.
+      <br v-if="isOwnProfile" />
+      <button v-if="isOwnProfile" class="btn-edit-profile" style="margin-top: 12px;" @click="showAddRefModal = true">Add Reference</button>
+    </div>
 
     <template v-else>
       <section
