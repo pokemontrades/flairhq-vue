@@ -32,7 +32,12 @@ public class UrlNormalizer {
         String clean = q >= 0 ? url.substring(0, q) : url;
         if (!MOBILE_REDDIT.matcher(clean).find()) return clean;
         try {
-            HttpRequest req = HttpRequest.newBuilder(URI.create(clean))
+            URI uri = URI.create(clean);
+            String host = uri.getHost();
+            if (host == null || (!host.equals("reddit.com") && !host.endsWith(".reddit.com"))) {
+                return clean;
+            }
+            HttpRequest req = HttpRequest.newBuilder(uri)
                     .method("HEAD", HttpRequest.BodyPublishers.noBody())
                     .header("User-Agent", "FlairHQ/1.0")
                     .timeout(Duration.ofSeconds(5))
