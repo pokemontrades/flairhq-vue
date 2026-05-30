@@ -6,15 +6,19 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.session.FindByIndexNameSessionRepository;
 import org.springframework.session.Session;
 import org.springframework.session.security.SpringSessionBackedSessionRegistry;
-import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -43,6 +47,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http, SessionRegistry sessionRegistry) throws Exception {
         http
             .addFilterBefore(serviceKeyAuthFilter, UsernamePasswordAuthenticationFilter.class)
+            .addFilterAfter(new CsrfTokenFilter(), BasicAuthenticationFilter.class)
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints
                 .requestMatchers(
@@ -74,8 +79,16 @@ public class SecurityConfig {
                 .accessDeniedHandler(accessDeniedLoggingHandler)
             )
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            // CSRF disabled — API is consumed by a separate SPA origin
-            .csrf(csrf -> csrf.disable()); // TODO: how can I enable CSRF protection
+            .csrf(csrf -> csrf
+                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
+                // Bearer-token requests (service key / Discord bot) are not cookie-based
+                // and cannot be exploited by CSRF, so they are exempt
+                .ignoringRequestMatchers(request -> {
+                    String auth = request.getHeader(HttpHeaders.AUTHORIZATION);
+                    return auth != null && auth.startsWith("Bearer ");
+                })
+            );
 
         return http.build();
     }
@@ -92,6 +105,8 @@ public class SecurityConfig {
         config.setAllowedOrigins(List.of(frontendUrl));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
+        // Expose the CSRF token header so the cross-origin SPA can read it from responses
+        config.setExposedHeaders(List.of("X-XSRF-TOKEN"));
         // Required so the browser sends the session cookie cross-origin
         config.setAllowCredentials(true);
 
