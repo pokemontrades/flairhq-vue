@@ -169,10 +169,9 @@ public class ReferenceProcessor {
     }
 
     /**
-     * Moderator function to mark a reference as must fix with an optional reason.
+     * Moderator function to set a reference back to pending status, removing any approval, rejection, or must-fix flags.
      * 
      * @param id
-     * @param reason
      * @return
      */
     public ReferenceResponse setPending(@NonNull String id) {
@@ -180,12 +179,21 @@ public class ReferenceProcessor {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         ref.setMustFix(false);
         ref.setMustFixReason(null);
+        ref.setRejected(false);
+        ref.setRejectedReason(null);
         ref.setApproved(false);
         ref.setVerified(false);
         ref.setUpdatedAt(Instant.now());
         return referenceMapper.toResponse(referenceRepository.save(ref), true);
     }
 
+    /**
+     * Moderator function to mark a reference as must fix with an optional reason.
+     * 
+     * @param id
+     * @param reason
+     * @return
+     */
     public ReferenceResponse markMustFix(@NonNull String id, String reason) {
         Reference ref = referenceRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
