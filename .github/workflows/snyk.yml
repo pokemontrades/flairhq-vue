@@ -30,7 +30,7 @@ jobs:
 
       - name: Scan code (SAST)
         working-directory: flairhq-api
-        run: snyk code test --severity-threshold=high --org=dengar66
+        run: snyk code test --severity-threshold=high
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
@@ -62,6 +62,6 @@ jobs:
 
       - name: Scan code (SAST)
         working-directory: flairhq-vue
-        run: snyk code test --severity-threshold=high --org=dengar66
+        run: snyk code test --severity-threshold=high
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}

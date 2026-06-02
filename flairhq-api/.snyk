@@ -13,3 +13,12 @@ ignore:
     - '*':
         reason: Transitive via springdoc -> swagger-core; no direct upgrade path until swagger-core updates its commons-lang3 constraint
         expires: '2027-01-01T00:00:00.000Z'
+exclude:
+  code:
+    # False positive: CSRF protection is enabled globally; only Bearer-token requests are exempt,
+    # which cannot be exploited via CSRF (browsers cannot forge Authorization headers cross-origin).
+    - 'src/main/java/org/ptrades/flairhq/config/SecurityConfig.java'
+    # False positive: SSRF data-flow traces start here, but all URL inputs are validated against
+    # the reddit.com/r/pokemontrades/ pattern before reaching UrlNormalizer, which also enforces
+    # its own host allowlist and only makes HTTP requests for mobile Reddit share URLs.
+    - 'src/main/java/org/ptrades/flairhq/controller/ReferenceController.java'
