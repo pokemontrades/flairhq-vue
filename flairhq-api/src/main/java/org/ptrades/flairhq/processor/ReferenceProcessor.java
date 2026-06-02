@@ -71,7 +71,19 @@ public class ReferenceProcessor {
         String normalizedUrl = urlNormalizer.normalize(request.getUrl());
         List<Reference> duplicates = referenceRepository.findByUserAndUrl(username, normalizedUrl);
         if (!duplicates.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A reference with that URL already exists.");
+        }
+        String newBase = UrlNormalizer.permalinkBase(normalizedUrl);
+        if (newBase != null) {
+            boolean duplicateBase = referenceRepository.findByUser(username).stream()
+                    .map(Reference::getUrl)
+                    .filter(Objects::nonNull)
+                    .map(url -> UrlNormalizer.permalinkBase(urlNormalizer.normalize(url)))
+                    .filter(Objects::nonNull)
+                    .anyMatch(newBase::equals);
+            if (duplicateBase) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You already have a reference for this trade.");
+            }
         }
         request.setUrl(normalizedUrl);
         Reference saved = referenceRepository.save(Objects.requireNonNull(referenceMapper.toDocument(request, username)));
