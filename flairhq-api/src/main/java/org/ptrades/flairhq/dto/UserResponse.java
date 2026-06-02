@@ -19,6 +19,7 @@ public class UserResponse {
     private Boolean banned;
     private String[] friendCodes;
     private String intro;
+    private Boolean hideReciprocalSection;
     private Instant createdAt;
     private Instant updatedAt;
 

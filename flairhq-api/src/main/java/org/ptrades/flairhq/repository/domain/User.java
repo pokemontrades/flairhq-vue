@@ -25,6 +25,7 @@ public class User {
     private Boolean banned;
     private String[] friendCodes; // test around this
     private String intro;
+    private Boolean hideReciprocalSection;
 
     private Instant createdAt;
     private Instant updatedAt;

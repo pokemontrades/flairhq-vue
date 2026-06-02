@@ -223,6 +223,17 @@
   border-radius: 8px;
 }
 
+.reciprocal-section--collapsed {
+  padding-bottom: 1.25rem;
+}
+
+.reciprocal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
 .reciprocal-title {
   font-size: 0.95rem;
   font-weight: 700;
@@ -235,6 +246,24 @@
   color: var(--color-text);
   opacity: 0.75;
   margin: 0 0 1rem;
+}
+
+.btn-reciprocal-toggle {
+  flex-shrink: 0;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-text);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+
+.btn-reciprocal-toggle:hover {
+  opacity: 1;
 }
 
 .reciprocal-row {

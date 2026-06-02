@@ -7,6 +7,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.ptrades.flairhq.common.EventType;
 import org.ptrades.flairhq.dto.SetFlairTextRequest;
+import org.ptrades.flairhq.dto.UserRequest;
 import org.ptrades.flairhq.dto.UserResponse;
 import org.ptrades.flairhq.mapper.UserMapper;
 import org.ptrades.flairhq.repository.EventRepository;
@@ -66,6 +67,41 @@ class UserProcessorTest {
 
         verify(userRepository).findByBanned(true);
         verify(userRepository, never()).findAll();
+    }
+
+    // ── upsertMe ──────────────────────────────────────────────────────────────
+
+    @Test
+    void upsertMe_existingUser_appliesUpdateAndSaves() {
+        User user = makeUser("alice");
+        UserRequest request = new UserRequest();
+        request.setHideReciprocalSection(true);
+
+        when(userRepository.findById("alice")).thenReturn(Optional.of(user));
+        when(userRepository.save(user)).thenReturn(user);
+        when(userMapper.toResponse(user)).thenReturn(UserResponse.builder().build());
+
+        processor.upsertMe(request, "alice");
+
+        verify(userMapper).applyUpdate(request, user);
+        verify(userMapper, never()).toNewUser(any(), any());
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    void upsertMe_newUser_createsViaToNewUser() {
+        User user = makeUser("alice");
+        UserRequest request = new UserRequest();
+
+        when(userRepository.findById("alice")).thenReturn(Optional.empty());
+        when(userMapper.toNewUser(request, "alice")).thenReturn(user);
+        when(userRepository.save(user)).thenReturn(user);
+        when(userMapper.toResponse(user)).thenReturn(UserResponse.builder().build());
+
+        processor.upsertMe(request, "alice");
+
+        verify(userMapper).toNewUser(request, "alice");
+        verify(userMapper, never()).applyUpdate(any(), any());
     }
 
     // ── setFlairText ──────────────────────────────────────────────────────────

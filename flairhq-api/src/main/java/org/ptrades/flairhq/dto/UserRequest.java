@@ -7,5 +7,6 @@ public class UserRequest {
 
     private String intro;
     private String[] friendCodes;
+    private Boolean hideReciprocalSection;
 
 }

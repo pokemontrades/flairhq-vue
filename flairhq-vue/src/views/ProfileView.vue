@@ -22,6 +22,7 @@ interface UserProfile {
   friendCodes: string[]
   flairText: string | null
   flairCssClass: string | null
+  hideReciprocalSection: boolean
 }
 
 const BELOW_POKEBALL = new Set(['default', 'gen2', 'gen21'])
@@ -35,7 +36,7 @@ const reasonStore     = useRejectionReasonStore()
 const username     = computed(() => (route.params.username as string) || auth.user!.name)
 const isOwnProfile = computed(() => username.value === auth.user?.name)
 
-const userProfile        = ref<UserProfile>({ iconImg: null, intro: null, friendCodes: [], flairText: null, flairCssClass: null })
+const userProfile        = ref<UserProfile>({ iconImg: null, intro: null, friendCodes: [], flairText: null, flairCssClass: null, hideReciprocalSection: false })
 const introEl            = ref<HTMLElement | null>(null)
 const introExpanded      = ref(false)
 const introOverflows     = ref(false)
@@ -56,6 +57,19 @@ function onRefAdded(created: Reference) {
   refStore.references = [created, ...refStore.references]
   refStore.loadPendingReciprocal()
   addRefPrefill.value = undefined
+}
+
+async function toggleReciprocalSection() {
+  const next = !userProfile.value.hideReciprocalSection
+  userProfile.value.hideReciprocalSection = next
+  try {
+    await fetch(`${API_BASE}/api/users/me`, {
+      method:      'PUT',
+      credentials: 'include',
+      headers:     { 'Content-Type': 'application/json' },
+      body:        JSON.stringify({ hideReciprocalSection: next }),
+    })
+  } catch { /* non-critical — preference is updated locally regardless */ }
 }
 
 function openAddRefForReciprocal(r: Reference) {
@@ -80,11 +94,12 @@ async function loadProfile(name: string, own: boolean) {
     if (res.ok) {
       const data = await res.json()
       userProfile.value = {
-        iconImg:       data.iconImg ?? null,
-        intro:         data.intro ?? null,
-        friendCodes:   data.friendCodes ?? [],
-        flairText:     data.flair?.ptrades?.flairText ?? null,
-        flairCssClass: data.flair?.ptrades?.flairCssClass ?? null,
+        iconImg:                data.iconImg ?? null,
+        intro:                  data.intro ?? null,
+        friendCodes:            data.friendCodes ?? [],
+        flairText:              data.flair?.ptrades?.flairText ?? null,
+        flairCssClass:          data.flair?.ptrades?.flairCssClass ?? null,
+        hideReciprocalSection:  data.hideReciprocalSection ?? false,
       }
       initOpenSections()
     }
@@ -182,7 +197,7 @@ watch(() => userProfile.value.intro, async () => {
 
 watch(username, async (newUsername) => {
   refStore.load(newUsername)
-  userProfile.value = { iconImg: null, intro: null, friendCodes: [], flairText: null, flairCssClass: null }
+  userProfile.value = { iconImg: null, intro: null, friendCodes: [], flairText: null, flairCssClass: null, hideReciprocalSection: false }
   await loadProfile(newUsername, newUsername === auth.user?.name)
 })
 
@@ -429,10 +444,17 @@ function onFlairTextSaved() {
       @saved="onRefSaved"
     />
 
-    <section v-if="isOwnProfile && refStore.pendingReciprocal.length > 0" class="reciprocal-section">
-      <h2 class="reciprocal-title">Add Your Reference</h2>
-      <p class="reciprocal-subtitle">Your partner already submitted — add your side to complete the record.</p>
-      <div class="ref-list">
+    <section v-if="isOwnProfile && refStore.pendingReciprocal.length > 0" class="reciprocal-section" :class="{ 'reciprocal-section--collapsed': userProfile.hideReciprocalSection }">
+      <div class="reciprocal-header">
+        <div>
+          <h2 class="reciprocal-title">Add Your Reference</h2>
+          <p v-if="!userProfile.hideReciprocalSection" class="reciprocal-subtitle">Your partner already submitted — add your side to complete the record.</p>
+        </div>
+        <button class="btn-reciprocal-toggle" @click="toggleReciprocalSection" :title="userProfile.hideReciprocalSection ? 'Show' : 'Hide'">
+          {{ userProfile.hideReciprocalSection ? 'Show' : 'Hide' }}
+        </button>
+      </div>
+      <div v-if="!userProfile.hideReciprocalSection" class="ref-list">
         <div
           v-for="r in refStore.pendingReciprocal"
           :key="r.id"

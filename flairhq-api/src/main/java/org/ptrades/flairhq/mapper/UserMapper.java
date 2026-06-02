@@ -13,16 +13,17 @@ public interface UserMapper {
     // redToken and loggedFriendCodes have no counterpart in UserResponse — MapStruct skips them automatically
     UserResponse toResponse(User user);
 
-    @Mapping(target = "id",               source = "username")
-    @Mapping(target = "isMod",            constant = "false")
-    @Mapping(target = "banned",           constant = "false")
-    @Mapping(target = "flair",            ignore = true)
-    @Mapping(target = "iconImg",          ignore = true)
-    @Mapping(target = "modPermissions",   ignore = true)
-    @Mapping(target = "redToken",         ignore = true)
-    @Mapping(target = "loggedFriendCodes", ignore = true)
-    @Mapping(target = "createdAt",        expression = "java(java.time.Instant.now())")
-    @Mapping(target = "updatedAt",        expression = "java(java.time.Instant.now())")
+    @Mapping(target = "id",                     source = "username")
+    @Mapping(target = "isMod",                  constant = "false")
+    @Mapping(target = "banned",                 constant = "false")
+    @Mapping(target = "flair",                  ignore = true)
+    @Mapping(target = "iconImg",                ignore = true)
+    @Mapping(target = "modPermissions",         ignore = true)
+    @Mapping(target = "redToken",               ignore = true)
+    @Mapping(target = "loggedFriendCodes",      ignore = true)
+    @Mapping(target = "hideReciprocalSection",  ignore = true)
+    @Mapping(target = "createdAt",              expression = "java(java.time.Instant.now())")
+    @Mapping(target = "updatedAt",              expression = "java(java.time.Instant.now())")
     User toNewUser(UserRequest req, String username);
 
     @Mapping(target = "id",               ignore = true)
