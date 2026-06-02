@@ -106,6 +106,16 @@ const totalRefs = computed(() =>
   refStore.references.filter(r => !r.rejected && (!r.mustFix || isMod.value || isOwnProfile.value)).length
 )
 
+const verifiedRefs = computed(() =>
+  refStore.references.filter(r => !r.rejected && r.verified).length
+)
+
+const totalGiven = computed(() =>
+  refStore.references
+    .filter(r => r.type === 'giveaway' && !r.rejected)
+    .reduce((sum, r) => sum + (r.number || 0), 0)
+)
+
 function visibleRefs(type: import('../stores/references').ReferenceType) {
   return refStore.byType[type].filter(r => !r.mustFix || isMod.value || isOwnProfile.value)
 }
@@ -344,6 +354,8 @@ function onFlairTextSaved() {
           <button class="btn-edit-profile" @click="showAddRefModal = true">Add Reference</button>
         </div>
         <p class="ref-count">{{ totalRefs }} reference{{ totalRefs !== 1 ? 's' : '' }}</p>
+        <p class="ref-count">{{ verifiedRefs }} verified reference{{ verifiedRefs !== 1 ? 's' : '' }}</p>
+        <p v-if="totalGiven > 0" class="ref-count">{{ totalGiven }} Pokémon given away</p>
         <p v-if="userProfile.flairText" class="flair-text-display">{{ userProfile.flairText }}</p>
         <div v-if="userProfile.intro" class="profile-intro-wrap">
           <p
@@ -479,7 +491,10 @@ function onFlairTextSaved() {
                 class="ref-partner-link"
               >{{ ref.type === 'giveaway' ? otherParty(ref) : 'u/' + otherParty(ref) }}</RouterLink>
               <span v-else class="ref-partner-link ref-partner-anon">
-                {{ ref.type === 'giveaway' ? '(community)' : '(unknown)' }}
+                <template v-if="ref.type === 'giveaway'">
+                  {{ ref.number ? ref.number + ' given' : '' }}{{ ref.number && ref.description ? ' · ' : '' }}{{ ref.description }}
+                </template>
+                <template v-else>(unknown)</template>
               </span>
               <a :href="ref.url ?? undefined" target="_blank" rel="noopener" class="ref-link">
                 <span v-if="ref.type === 'giveaway' && postTitles[ref.id]" class="ref-post-title">
@@ -487,6 +502,9 @@ function onFlairTextSaved() {
                 </span>
                 <span v-else-if="ref.gave || ref.got" class="ref-trade">
                   {{ ref.gave }} → {{ ref.got }}
+                </span>
+                <span v-else-if="ref.description" class="ref-trade">
+                  {{ ref.description }}
                 </span>
               </a>
               <span class="ref-meta">
@@ -572,7 +590,10 @@ function onFlairTextSaved() {
             class="ref-partner-link"
           >{{ ref.type === 'giveaway' ? otherParty(ref) : 'u/' + otherParty(ref) }}</RouterLink>
           <span v-else class="ref-partner-link ref-partner-anon">
-            {{ ref.type === 'giveaway' ? '(community)' : '(unknown)' }}
+            <template v-if="ref.type === 'giveaway'">
+              {{ ref.number ? ref.number + ' given' : '' }}{{ ref.number && ref.description ? ' · ' : '' }}{{ ref.description }}
+            </template>
+            <template v-else>(unknown)</template>
           </span>
           <a :href="ref.url ?? undefined" target="_blank" rel="noopener" class="ref-link">
             <span class="ref-type-tag">{{ ref.type }}</span>
