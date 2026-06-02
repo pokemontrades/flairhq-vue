@@ -114,6 +114,13 @@ public class ReferenceController {
         return ResponseEntity.ok(referenceProcessor.reject(Objects.requireNonNull(id), reason));
     }
 
+    @PostMapping("/{id}/pending")
+    @PreAuthorize("@modSecurity.hasPermission(authentication, 'flair')")
+    public ResponseEntity<ReferenceResponse> setPending(@PathVariable String id) {
+        log.info("Setting reference id='{}' to pending", id);
+        return ResponseEntity.ok(referenceProcessor.setPending(Objects.requireNonNull(id)));
+    }
+
     @PostMapping("/{id}/must-fix")
     @PreAuthorize("@modSecurity.hasPermission(authentication, 'flair')")
     public ResponseEntity<ReferenceResponse> mustFix(

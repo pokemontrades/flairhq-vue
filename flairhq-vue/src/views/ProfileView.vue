@@ -249,6 +249,16 @@ async function submitMustFix() {
   }
 }
 
+async function setPendingRef(id: string) {
+  closeMenu()
+  actioning.add(id)
+  try {
+    await refStore.setPending(id)
+  } finally {
+    actioning.delete(id)
+  }
+}
+
 async function unapproveRef(id: string) {
   actioning.add(id)
   try {
@@ -519,6 +529,8 @@ function onFlairTextSaved() {
                       <div v-if="openMenuId === ref.id" class="action-dropdown">
                         <template v-if="ref.mustFix">
                           <button class="dropdown-item" @click="approveRef(ref.id)">Approve</button>
+                          <button class="dropdown-item" @click="setPendingRef(ref.id)">Set to Pending</button>
+                          <button class="dropdown-item danger" @click="rejectRef(ref.id)">Reject</button>
                           <button class="dropdown-item danger" @click="removeRef(ref.id)">Remove</button>
                         </template>
                         <template v-else>

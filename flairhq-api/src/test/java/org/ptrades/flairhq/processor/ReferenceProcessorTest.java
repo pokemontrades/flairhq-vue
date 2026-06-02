@@ -138,6 +138,109 @@ class ReferenceProcessorTest {
         assertNull(ref.getMustFixReason());
     }
 
+    @Test
+    void edit_substantiveFieldChanged_clearsMustFix() {
+        String url = "https://www.reddit.com/r/pokemontrades/comments/abc/";
+        Reference ref = makeRef("ref1", "alice", "bob");
+        ref.setUrl(url);
+        ref.setType(ReferenceType.CASUAL);
+        ref.setGave("pikachu");
+        ref.setGot("eevee");
+        ref.setMustFix(true);
+        ref.setMustFixReason("bad link");
+
+        ReferenceRequest request = makeCasualRequest(url);
+        request.setGave("bulbasaur"); // changed
+
+        when(referenceRepository.findById("ref1")).thenReturn(Optional.of(ref));
+        when(urlNormalizer.normalize(url)).thenReturn(url);
+        when(referenceRepository.save(ref)).thenReturn(ref);
+        when(referenceMapper.toResponse(ref, true)).thenReturn(ReferenceResponse.builder().build());
+
+        processor.edit("ref1", request, "alice");
+
+        assertFalse(ref.getMustFix());
+        assertNull(ref.getMustFixReason());
+    }
+
+    @Test
+    void edit_notesOnlyChanged_preservesMustFix() {
+        String url = "https://www.reddit.com/r/pokemontrades/comments/abc/";
+        Reference ref = makeRef("ref1", "alice", "bob");
+        ref.setUrl(url);
+        ref.setType(ReferenceType.CASUAL);
+        ref.setGave("pikachu");
+        ref.setGot("eevee");
+        ref.setMustFix(true);
+        ref.setMustFixReason("bad link");
+
+        ReferenceRequest request = makeCasualRequest(url); // identical substantive fields
+        request.setNotes("added a public note");
+
+        when(referenceRepository.findById("ref1")).thenReturn(Optional.of(ref));
+        when(urlNormalizer.normalize(url)).thenReturn(url);
+        when(referenceRepository.save(ref)).thenReturn(ref);
+        when(referenceMapper.toResponse(ref, true)).thenReturn(ReferenceResponse.builder().build());
+
+        processor.edit("ref1", request, "alice");
+
+        assertTrue(ref.getMustFix());
+        assertEquals("bad link", ref.getMustFixReason());
+    }
+
+    @Test
+    void edit_privateNotesOnlyChanged_preservesMustFix() {
+        String url = "https://www.reddit.com/r/pokemontrades/comments/abc/";
+        Reference ref = makeRef("ref1", "alice", "bob");
+        ref.setUrl(url);
+        ref.setType(ReferenceType.CASUAL);
+        ref.setGave("pikachu");
+        ref.setGot("eevee");
+        ref.setMustFix(true);
+        ref.setMustFixReason("bad link");
+
+        ReferenceRequest request = makeCasualRequest(url); // identical substantive fields
+        request.setPrivateNotes("private memo");
+
+        when(referenceRepository.findById("ref1")).thenReturn(Optional.of(ref));
+        when(urlNormalizer.normalize(url)).thenReturn(url);
+        when(referenceRepository.save(ref)).thenReturn(ref);
+        when(referenceMapper.toResponse(ref, true)).thenReturn(ReferenceResponse.builder().build());
+
+        processor.edit("ref1", request, "alice");
+
+        assertTrue(ref.getMustFix());
+        assertEquals("bad link", ref.getMustFixReason());
+    }
+
+    @Test
+    void edit_nullAndZeroNumberTreatedEqual_preservesMustFix() {
+        // Refs saved by the mapper store number=0 when none provided; a follow-up edit
+        // that still sends no number (null) should not be treated as a substantive change.
+        String url = "https://www.reddit.com/r/pokemontrades/comments/abc/";
+        Reference ref = makeRef("ref1", "alice", "bob");
+        ref.setUrl(url);
+        ref.setType(ReferenceType.CASUAL);
+        ref.setGave("pikachu");
+        ref.setGot("eevee");
+        ref.setNumber(0); // stored by mapper when original request had null
+        ref.setMustFix(true);
+        ref.setMustFixReason("bad link");
+
+        ReferenceRequest request = makeCasualRequest(url); // number stays null
+        request.setNotes("just a note");
+
+        when(referenceRepository.findById("ref1")).thenReturn(Optional.of(ref));
+        when(urlNormalizer.normalize(url)).thenReturn(url);
+        when(referenceRepository.save(ref)).thenReturn(ref);
+        when(referenceMapper.toResponse(ref, true)).thenReturn(ReferenceResponse.builder().build());
+
+        processor.edit("ref1", request, "alice");
+
+        assertTrue(ref.getMustFix());
+        assertEquals("bad link", ref.getMustFixReason());
+    }
+
     // ── delete ───────────────────────────────────────────────────────────────
 
     @Test
@@ -385,6 +488,51 @@ class ReferenceProcessorTest {
 
         assertTrue(ref.getApproved());
         verify(referenceRepository, never()).findByUserAndUser2(any(), any());
+    }
+
+    // ── setPending ────────────────────────────────────────────────────────────
+
+    @Test
+    void setPending_notFound_throwsNotFound() {
+        when(referenceRepository.findById("ref1")).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> processor.setPending("ref1"));
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    }
+
+    @Test
+    void setPending_clearsMustFixAndApprovalFlags() {
+        Reference ref = makeRef("ref1", "alice", "bob");
+        ref.setMustFix(true);
+        ref.setMustFixReason("bad link");
+        ref.setApproved(true);
+        ref.setVerified(true);
+        when(referenceRepository.findById("ref1")).thenReturn(Optional.of(ref));
+        when(referenceRepository.save(ref)).thenReturn(ref);
+        when(referenceMapper.toResponse(ref, true)).thenReturn(ReferenceResponse.builder().build());
+
+        processor.setPending("ref1");
+
+        assertFalse(ref.getMustFix());
+        assertNull(ref.getMustFixReason());
+        assertFalse(ref.getApproved());
+        assertFalse(ref.getVerified());
+    }
+
+    @Test
+    void setPending_savesAndReturnsResponse() {
+        Reference ref = makeRef("ref1", "alice", "bob");
+        ref.setMustFix(true);
+        when(referenceRepository.findById("ref1")).thenReturn(Optional.of(ref));
+        when(referenceRepository.save(ref)).thenReturn(ref);
+        ReferenceResponse expected = ReferenceResponse.builder().id("ref1").build();
+        when(referenceMapper.toResponse(ref, true)).thenReturn(expected);
+
+        ReferenceResponse result = processor.setPending("ref1");
+
+        assertEquals("ref1", result.getId());
+        verify(referenceRepository).save(ref);
     }
 
     // ── remove ────────────────────────────────────────────────────────────────

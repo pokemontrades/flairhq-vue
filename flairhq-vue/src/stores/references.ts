@@ -132,6 +132,13 @@ export const useReferenceStore = defineStore('references', () => {
     references.value = references.value.map(r => r.id === updated.id ? updated : r)
   }
 
+  async function setPending(id: string) {
+    const res = await apiFetch(`${API_BASE}/api/references/${id}/pending`, { method: 'POST' })
+    if (!res.ok) throw new Error(`${res.status}`)
+    const updated: Reference = await res.json()
+    references.value = references.value.map(r => r.id === updated.id ? updated : r)
+  }
+
   async function markMustFix(id: string, reason: string) {
     const res = await apiFetch(`${API_BASE}/api/references/${id}/must-fix`, {
       method: 'POST',
@@ -172,5 +179,5 @@ export const useReferenceStore = defineStore('references', () => {
     references.value = references.value.filter(r => r.id !== id)
   }
 
-  return { references, loading, error, byType, rejectedRefs, pendingReciprocal, load, loadPendingReciprocal, approve, unapprove, reject, markMustFix, update, remove }
+  return { references, loading, error, byType, rejectedRefs, pendingReciprocal, load, loadPendingReciprocal, approve, unapprove, reject, markMustFix, setPending, update, remove }
 })

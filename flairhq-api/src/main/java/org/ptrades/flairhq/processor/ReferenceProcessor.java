@@ -136,11 +136,22 @@ public class ReferenceProcessor {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
         request.setUrl(urlNormalizer.normalize(request.getUrl()));
+        int reqNumber = request.getNumber() != null ? request.getNumber() : 0;
+        int refNumber = ref.getNumber()     != null ? ref.getNumber()     : 0;
+        boolean substantiveFieldChanged = !Objects.equals(request.getUrl(),         ref.getUrl())
+                                       || !Objects.equals(request.getUser2(),       ref.getUser2())
+                                       || !Objects.equals(request.getGave(),        ref.getGave())
+                                       || !Objects.equals(request.getGot(),         ref.getGot())
+                                       || !Objects.equals(request.getDescription(), ref.getDescription())
+                                       || !Objects.equals(request.getType(),        ref.getType())
+                                       || reqNumber != refNumber;
         referenceMapper.applyUpdate(request, ref);
         ref.setApproved(false);
         ref.setVerified(false);
-        ref.setMustFix(false);
-        ref.setMustFixReason(null);
+        if (substantiveFieldChanged) {
+            ref.setMustFix(false);
+            ref.setMustFixReason(null);
+        }
         ref.setUpdatedAt(Instant.now());
         return referenceMapper.toResponse(referenceRepository.save(ref), true);
     }
@@ -164,6 +175,17 @@ public class ReferenceProcessor {
      * @param reason
      * @return
      */
+    public ReferenceResponse setPending(@NonNull String id) {
+        Reference ref = referenceRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        ref.setMustFix(false);
+        ref.setMustFixReason(null);
+        ref.setApproved(false);
+        ref.setVerified(false);
+        ref.setUpdatedAt(Instant.now());
+        return referenceMapper.toResponse(referenceRepository.save(ref), true);
+    }
+
     public ReferenceResponse markMustFix(@NonNull String id, String reason) {
         Reference ref = referenceRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
