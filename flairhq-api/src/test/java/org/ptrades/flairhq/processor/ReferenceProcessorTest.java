@@ -430,6 +430,27 @@ class ReferenceProcessorTest {
     }
 
     @Test
+    void approve_mustFixRef_clearsMustFix() {
+        Reference ref = makeRef("ref1", "alice", "bob");
+        ref.setType(ReferenceType.CASUAL);
+        ref.setUrl("https://www.reddit.com/r/sub/comments/abc/title/xyz/");
+        ref.setMustFix(true);
+        ref.setMustFixReason("bad link");
+
+        when(referenceRepository.findById("ref1")).thenReturn(Optional.of(ref));
+        when(urlNormalizer.normalize(ref.getUrl())).thenReturn(ref.getUrl());
+        when(referenceRepository.findByUserAndUser2("bob", "alice")).thenReturn(List.of());
+        when(referenceRepository.save(ref)).thenReturn(ref);
+        when(referenceMapper.toResponse(ref, true)).thenReturn(ReferenceResponse.builder().build());
+
+        processor.approve("ref1", "mod1");
+
+        assertTrue(ref.getApproved());
+        assertFalse(ref.getMustFix());
+        assertNull(ref.getMustFixReason());
+    }
+
+    @Test
     void approve_noReciprocalFound_setsApprovedNotVerified() {
         Reference ref = makeRef("ref1", "alice", "bob");
         ref.setType(ReferenceType.CASUAL);

@@ -293,6 +293,8 @@ public class ReferenceProcessor {
         }
 
         ref.setApproved(true);
+        ref.setMustFix(false);
+        ref.setMustFixReason(null);
         ref.setUpdatedAt(Instant.now());
 
         if (VERIFIABLE_TYPES.contains(ref.getType()) && ref.getUrl() != null) {
