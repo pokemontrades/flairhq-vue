@@ -567,9 +567,9 @@ function onFlairTextSaved() {
                       >{{ actioning.has(ref.id) ? '…' : '▾' }}</button>
                       <div v-if="openMenuId === ref.id" class="action-dropdown">
                         <template v-if="ref.mustFix">
-                          <button class="dropdown-item" @click="approveRef(ref.id)">Approve</button>
-                          <button class="dropdown-item" @click="setPendingRef(ref.id)">Set to Pending</button>
-                          <button class="dropdown-item danger" @click="rejectRef(ref.id)">Reject</button>
+                          <button v-if="!isOwnProfile" class="dropdown-item" @click="approveRef(ref.id)">Approve</button>
+                          <button v-if="!isOwnProfile" class="dropdown-item" @click="setPendingRef(ref.id)">Set to Pending</button>
+                          <button v-if="!isOwnProfile" class="dropdown-item danger" @click="rejectRef(ref.id)">Reject</button>
                           <button class="dropdown-item danger" @click="removeRef(ref.id)">Remove</button>
                         </template>
                         <template v-else>
@@ -623,6 +623,12 @@ function onFlairTextSaved() {
           <span class="ref-meta">
             <span class="badge rejected-badge reason-badge" @click.stop="toggleReason(ref.id)">rejected</span>
             <span class="ref-date">{{ formatDate(ref.createdAt) }}</span>
+            <button
+              v-if="isMod && !isOwnProfile"
+              class="btn-approve"
+              :disabled="actioning.has(ref.id)"
+              @click.stop="setPendingRef(ref.id)"
+            >{{ actioning.has(ref.id) ? '…' : 'Undo' }}</button>
           </span>
           <span v-if="expandedReasons.has(ref.id)" class="ref-reason-line">
             {{ ref.rejectedReason ?? 'No reason provided' }}
