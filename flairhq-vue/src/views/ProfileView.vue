@@ -63,11 +63,10 @@ async function toggleReciprocalSection() {
   const next = !userProfile.value.hideReciprocalSection
   userProfile.value.hideReciprocalSection = next
   try {
-    await fetch(`${API_BASE}/api/users/me`, {
-      method:      'PUT',
-      credentials: 'include',
-      headers:     { 'Content-Type': 'application/json' },
-      body:        JSON.stringify({ hideReciprocalSection: next }),
+    await apiFetch(`${API_BASE}/api/users/me`, {
+      method:  'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ hideReciprocalSection: next }),
     })
   } catch { /* non-critical — preference is updated locally regardless */ }
 }

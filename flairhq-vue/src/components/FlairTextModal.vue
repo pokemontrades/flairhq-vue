@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import { apiFetch, API_BASE } from '../lib/apiFetch'
 import BaseModal from './BaseModal.vue'
 
 const CONSOLES = ['Switch', '3DS'] as const
@@ -19,7 +20,6 @@ const emit = defineEmits<{
   (e: 'saved'): void
 }>()
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL as string
 
 const fcs    = ref<FcEntry[]>([{ console: '', value: '' }])
 const games  = ref<GameEntry[]>([{ ign: '', game: '' }])
@@ -148,10 +148,9 @@ async function save() {
   saving.value = true
   error.value  = null
   try {
-    const res = await fetch(`${API_BASE}/api/users/me/flair`, {
-      method:      'PUT',
-      credentials: 'include',
-      headers:     { 'Content-Type': 'application/json' },
+    const res = await apiFetch(`${API_BASE}/api/users/me/flair`, {
+      method:  'PUT',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ptrades: preview.value }),
     })
     if (res.status === 429) throw new Error('You can only update your flair text once every 2 minutes.')

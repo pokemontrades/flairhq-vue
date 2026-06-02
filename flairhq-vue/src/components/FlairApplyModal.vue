@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import { apiFetch, API_BASE } from '../lib/apiFetch'
 import BaseModal from './BaseModal.vue'
 
 interface Flair {
@@ -29,7 +30,6 @@ const emit = defineEmits<{
   (e: 'applied'): void
 }>()
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL as string
 
 interface RefCounts { casual: number; giveaway: number; involvement: number }
 
@@ -49,10 +49,10 @@ watch(() => props.modelValue, async (open) => {
   loading.value = true
   try {
     const [flairRes, appRes, meRes, countsRes] = await Promise.all([
-      fetch(`${API_BASE}/api/flairs`, { credentials: 'include' }),
-      fetch(`${API_BASE}/api/applications/me`, { credentials: 'include' }),
-      fetch(`${API_BASE}/api/users/me`, { credentials: 'include' }),
-      fetch(`${API_BASE}/api/references/me/counts`, { credentials: 'include' }),
+      apiFetch(`${API_BASE}/api/flairs`),
+      apiFetch(`${API_BASE}/api/applications/me`),
+      apiFetch(`${API_BASE}/api/users/me`),
+      apiFetch(`${API_BASE}/api/references/me/counts`),
     ])
     if (flairRes.ok)   flairs.value    = await flairRes.json()
     if (appRes.ok)     myApps.value    = await appRes.json()
@@ -145,9 +145,8 @@ async function submit() {
   submitting.value = true
   error.value = null
   try {
-    const res = await fetch(`${API_BASE}/api/applications/me`, {
-      method: 'POST',
-      credentials: 'include',
+    const res = await apiFetch(`${API_BASE}/api/applications/me`, {
+      method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ flair: selectedFlair.value.name, sub: selectedFlair.value.sub }),
     })

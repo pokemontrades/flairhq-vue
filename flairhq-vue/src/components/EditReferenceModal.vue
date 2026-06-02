@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import { REFERENCE_CATEGORIES } from '../stores/references'
 import type { Reference } from '../stores/references'
+import { apiFetch, API_BASE } from '../lib/apiFetch'
 import BaseModal from './BaseModal.vue'
 
 const props = defineProps<{
@@ -14,7 +15,6 @@ const emit = defineEmits<{
   (e: 'saved', ref: Reference): void
 }>()
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL as string
 
 const form = ref({
   url:          '',
@@ -88,10 +88,9 @@ async function save() {
   saving.value = true
   error.value  = null
   try {
-    const res = await fetch(`${API_BASE}/api/references/${props.reference.id}`, {
-      method:      'PUT',
-      credentials: 'include',
-      headers:     { 'Content-Type': 'application/json' },
+    const res = await apiFetch(`${API_BASE}/api/references/${props.reference.id}`, {
+      method:  'PUT',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         url:          form.value.url          || null,
         user2:        showPartner.value  ? (form.value.user2       || null) : null,

@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import { ADDABLE_REFERENCE_CATEGORIES } from '../stores/references'
 import type { Reference } from '../stores/references'
+import { apiFetch, API_BASE } from '../lib/apiFetch'
 import BaseModal from './BaseModal.vue'
 
 const props = defineProps<{
@@ -14,7 +15,6 @@ const emit = defineEmits<{
   (e: 'added', ref: Reference): void
 }>()
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL as string
 
 const defaultForm = () => ({
   url:          '',
@@ -79,10 +79,9 @@ async function submit() {
   saving.value = true
   error.value  = null
   try {
-    const res = await fetch(`${API_BASE}/api/references`, {
-      method:      'POST',
-      credentials: 'include',
-      headers:     { 'Content-Type': 'application/json' },
+    const res = await apiFetch(`${API_BASE}/api/references`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         url:          form.value.url          || null,
         user2:        showPartner.value  ? (form.value.user2       || null) : null,

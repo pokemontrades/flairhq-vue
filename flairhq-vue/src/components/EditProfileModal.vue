@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { apiFetch, API_BASE } from '../lib/apiFetch'
 import BaseModal from './BaseModal.vue'
 
 const props = defineProps<{
@@ -13,7 +14,6 @@ const emit = defineEmits<{
   (e: 'saved', data: { intro: string; friendCodes: string[] }): void
 }>()
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL as string
 
 const localIntro = ref(props.intro)
 const localFcs   = ref<string[]>([...props.friendCodes])
@@ -37,10 +37,9 @@ async function save() {
   saving.value = true
   error.value  = null
   try {
-    const res = await fetch(`${API_BASE}/api/users/me`, {
-      method:      'PUT',
-      credentials: 'include',
-      headers:     { 'Content-Type': 'application/json' },
+    const res = await apiFetch(`${API_BASE}/api/users/me`, {
+      method:  'PUT',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         intro:       localIntro.value,
         friendCodes: localFcs.value.filter(fc => fc.trim()),
