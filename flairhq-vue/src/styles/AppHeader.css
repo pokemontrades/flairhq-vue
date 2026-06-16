@@ -40,6 +40,11 @@
   flex-shrink: 0;
 }
 
+.type-select option {
+  background: var(--color-background);
+  color: var(--color-text);
+}
+
 .search-input {
   flex: 1;
   min-width: 0;
