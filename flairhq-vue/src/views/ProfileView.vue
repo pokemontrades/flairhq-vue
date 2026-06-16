@@ -546,7 +546,6 @@ function onFlairTextSaved() {
                   title="Show notes"
                   @click.stop="toggleNote(ref.id)"
                 ><IconInfo /></span>
-                <span class="ref-date">{{ formatDate(ref.createdAt) }}</span>
                 <button
                   v-if="isOwnProfile"
                   class="btn-edit-ref"
