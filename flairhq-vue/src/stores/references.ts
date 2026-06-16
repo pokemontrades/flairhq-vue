@@ -25,6 +25,7 @@ export interface Reference {
   mustFixReason: string | null
   reciprocalApproved: boolean
   notes: string
+  privateNotes?: string
   createdAt: string
   updatedAt: string
 }

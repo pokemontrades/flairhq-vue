@@ -15,6 +15,7 @@ import FlairTextModal from '../components/FlairTextModal.vue'
 import ReasonModal from '../components/ReasonModal.vue'
 import ModnotePanel from '../components/ModnotePanel.vue'
 import PokeBallSpinner from '../components/PokeBallSpinner.vue'
+import IconInfo from '../components/icons/IconInfo.vue'
 
 interface UserProfile {
   iconImg: string | null
@@ -210,10 +211,16 @@ const approving         = reactive<Set<string>>(new Set())
 const actioning         = reactive<Set<string>>(new Set())
 const openMenuId        = ref<string | null>(null)
 const expandedReasons   = reactive<Set<string>>(new Set())
+const expandedNotes     = reactive<Set<string>>(new Set())
 
 function toggleReason(id: string) {
   if (expandedReasons.has(id)) expandedReasons.delete(id)
   else expandedReasons.add(id)
+}
+
+function toggleNote(id: string) {
+  if (expandedNotes.has(id)) expandedNotes.delete(id)
+  else expandedNotes.add(id)
 }
 const mustFixTargetId  = ref<string | null>(null)
 const mustFixReason    = ref('')
@@ -538,6 +545,12 @@ function onFlairTextSaved() {
                 <span v-else-if="isMod && ref.approved"                               class="badge approved">approved</span>
                 <span v-else-if="isMod && !ref.approved && ref.reciprocalApproved" class="badge reciprocal-approved">partner approved</span>
                 <span v-else-if="isMod && !ref.approved"                           class="badge pending-mod">pending</span>
+                <span
+                  v-if="ref.notes || (ref.privateNotes && isOwnProfile)"
+                  class="note-badge"
+                  title="Show notes"
+                  @click.stop="toggleNote(ref.id)"
+                ><IconInfo /></span>
                 <span class="ref-date">{{ formatDate(ref.createdAt) }}</span>
                 <button
                   v-if="isOwnProfile"
@@ -586,6 +599,13 @@ function onFlairTextSaved() {
                 v-if="expandedReasons.has(ref.id) && ref.mustFix && (isMod || isOwnProfile)"
                 class="ref-reason-line"
               >{{ ref.mustFixReason ?? 'No reason provided' }}</span>
+              <span
+                v-if="expandedNotes.has(ref.id)"
+                class="ref-notes-line"
+              >
+                <span v-if="ref.notes">{{ ref.notes }}</span>
+                <span v-if="ref.privateNotes && isOwnProfile" class="ref-notes-private">(private) {{ ref.privateNotes }}</span>
+              </span>
             </div>
           </div>
         </template>
@@ -622,6 +642,12 @@ function onFlairTextSaved() {
           </a>
           <span class="ref-meta">
             <span class="badge rejected-badge reason-badge" @click.stop="toggleReason(ref.id)">rejected</span>
+            <span
+              v-if="ref.notes || (ref.privateNotes && isOwnProfile)"
+              class="note-badge"
+              title="Show notes"
+              @click.stop="toggleNote(ref.id)"
+            ><IconInfo /></span>
             <span class="ref-date">{{ formatDate(ref.createdAt) }}</span>
             <button
               v-if="isMod && !isOwnProfile"
@@ -632,6 +658,13 @@ function onFlairTextSaved() {
           </span>
           <span v-if="expandedReasons.has(ref.id)" class="ref-reason-line">
             {{ ref.rejectedReason ?? 'No reason provided' }}
+          </span>
+          <span
+            v-if="expandedNotes.has(ref.id)"
+            class="ref-notes-line"
+          >
+            <span v-if="ref.notes">{{ ref.notes }}</span>
+            <span v-if="ref.privateNotes && isOwnProfile" class="ref-notes-private">(private) {{ ref.privateNotes }}</span>
           </span>
         </div>
       </div>
