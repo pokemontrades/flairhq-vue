@@ -142,15 +142,10 @@ const hasPokeBallOrHigher = computed(() => {
   return !BELOW_POKEBALL.has(primary) && primary !== ''
 })
 
-const defaultOpenSection = computed(() =>
-  hasPokeBallOrHigher.value ? 'event' : 'casual'
-)
-
 const openSections = reactive<Set<string>>(new Set())
 
 function initOpenSections() {
   openSections.clear()
-  openSections.add(defaultOpenSection.value)
 }
 
 function toggleSection(type: string) {
