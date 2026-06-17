@@ -59,24 +59,22 @@ function labelFor(type: string) {
     <template v-else-if="store.lastType === 'references'">
       <div v-if="store.referenceResults.length === 0" class="state-msg">No references found.</div>
       <div v-else class="result-list">
-        <a
+        <RouterLink
           v-for="ref in store.referenceResults"
           :key="ref.id"
-          :href="ref.url"
-          target="_blank"
-          rel="noopener"
+          :to="{ name: 'userProfile', params: { username: ref.user } }"
           class="result-row"
         >
           <span class="result-primary">u/{{ ref.user }}</span>
+          <span v-if="ref.user2" class="result-secondary">and u/{{ ref.user2 }}</span>
           <span class="result-secondary">{{ labelFor(ref.type) }}</span>
           <span v-if="ref.gave || ref.got" class="result-trade">
             {{ ref.gave }} → {{ ref.got }}
           </span>
-          <span class="result-meta">
-            <span v-if="ref.verified" class="badge verified">verified</span>
-            <span class="result-date">{{ formatDate(ref.createdAt) }}</span>
+          <span v-if="ref.verified" class="result-meta">
+            <span class="badge verified">verified</span>
           </span>
-        </a>
+        </RouterLink>
       </div>
     </template>
 
