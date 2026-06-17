@@ -91,9 +91,20 @@ export const useReferenceStore = defineStore('references', () => {
   async function load(username: string) {
     references.value = []
     await withLoading(loading, error, async () => {
-      const res = await apiFetch(`${API_BASE}/api/references?user=${encodeURIComponent(username)}`)
-      if (!res.ok) throw new Error(`${res.status}`)
-      references.value = await res.json()
+      const firstRes = await apiFetch(`${API_BASE}/api/references?user=${encodeURIComponent(username)}&page=0&size=200`)
+      if (!firstRes.ok) throw new Error(`${firstRes.status}`)
+      const firstPage = await firstRes.json()
+      references.value = firstPage.items
+
+      if (firstPage.totalPages > 1) {
+        const remaining = Array.from({ length: firstPage.totalPages - 1 }, (_, i) =>
+          apiFetch(`${API_BASE}/api/references?user=${encodeURIComponent(username)}&page=${i + 1}&size=200`)
+            .then(r => r.ok ? r.json() : Promise.reject(new Error(`${r.status}`)))
+            .then(p => p.items as Reference[])
+        )
+        const pages = await Promise.all(remaining)
+        references.value = [...references.value, ...pages.flat()]
+      }
     }, 'Failed to load references')
   }
 

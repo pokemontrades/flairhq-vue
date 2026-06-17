@@ -9,12 +9,16 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.ptrades.flairhq.common.ReferenceType;
+import org.ptrades.flairhq.dto.PagedResponse;
 import org.ptrades.flairhq.dto.ReferenceRequest;
 import org.ptrades.flairhq.dto.ReferenceResponse;
 import org.ptrades.flairhq.mapper.ReferenceMapper;
 import org.ptrades.flairhq.repository.ReferenceRepository;
 import org.ptrades.flairhq.repository.domain.Reference;
 import org.ptrades.flairhq.service.UrlNormalizer;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
@@ -38,7 +42,7 @@ public class ReferenceProcessor {
         this.urlNormalizer       = urlNormalizer;
     }
 
-    public List<ReferenceResponse> getByUser(String username, String requestingUser) {
+    public PagedResponse<ReferenceResponse> getByUser(String username, String requestingUser, int page, int size) {
         Set<String> approvedPartnerUrlBases = referenceRepository.findByUser2(username).stream()
                 .filter(r -> Boolean.TRUE.equals(r.getApproved()))
                 .map(Reference::getUrl)
@@ -47,7 +51,10 @@ public class ReferenceProcessor {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
-        return referenceRepository.findByUser(username).stream()
+        Page<Reference> refPage = referenceRepository.findByUser(
+                username, PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt")));
+
+        List<ReferenceResponse> items = refPage.getContent().stream()
                 .map(ref -> {
                     boolean reciprocalApproved = ref.getUrl() != null &&
                             approvedPartnerUrlBases.contains(
@@ -56,6 +63,8 @@ public class ReferenceProcessor {
                             .toBuilder().reciprocalApproved(reciprocalApproved).build();
                 })
                 .toList();
+
+        return new PagedResponse<>(items, refPage.getTotalElements(), page, size, refPage.getTotalPages());
     }
 
     /**

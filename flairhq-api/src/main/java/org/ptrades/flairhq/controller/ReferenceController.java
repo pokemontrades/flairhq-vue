@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import org.ptrades.flairhq.dto.PagedResponse;
 import org.ptrades.flairhq.dto.ReasonRequest;
 import org.ptrades.flairhq.dto.ReferenceRequest;
 import org.ptrades.flairhq.dto.ReferenceResponse;
@@ -38,12 +39,15 @@ public class ReferenceController {
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<ReferenceResponse>> getByUser(
+    public ResponseEntity<PagedResponse<ReferenceResponse>> getByUser(
             @RequestParam String user,
+            @RequestParam(defaultValue = "0")   int page,
+            @RequestParam(defaultValue = "200") int size,
             @AuthenticationPrincipal OAuth2User principal) {
+        size = Math.min(size, 500);
         String requestingUser = Objects.requireNonNull(principal.getAttribute("name"));
-        log.debug("Fetching references for user='{}' requested by '{}'", user, requestingUser);
-        return ResponseEntity.ok(referenceProcessor.getByUser(user, requestingUser));
+        log.debug("Fetching references for user='{}' page={} size={} requested by '{}'", user, page, size, requestingUser);
+        return ResponseEntity.ok(referenceProcessor.getByUser(user, requestingUser, page, size));
     }
 
     @GetMapping("/me/counts")
