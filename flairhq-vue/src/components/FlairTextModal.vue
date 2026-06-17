@@ -215,7 +215,6 @@ async function save() {
               type="text"
               class="field-input ign-input"
               placeholder="IGN"
-              maxlength="12"
             />
             <select v-model="g.game" class="field-select game-select">
               <option value="">— Game —</option>
