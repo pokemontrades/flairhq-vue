@@ -7,7 +7,8 @@
 .flair-gsball1::before, .flair-pokeball1::before, .flair-premierball1::before,
 .flair-luxuryball1::before, .flair-dreamball1::before, .flair-ovalcharm1::before,
 .flair-greatball1::before, .flair-ultraball1::before, .flair-masterball1::before,
-.flair-cherishball1::before, .flair-shinycharm1::before {
+.flair-cherishball1::before, .flair-shinycharm1::before,
+.flair-involvement::before {
   content: "";
   width: 24px;
   height: 24px;
@@ -19,6 +20,7 @@
   pointer-events: none;
 }
 
+/* Ball flairs - ballfalairs.png spritesheet (24×24 per sprite) */
 .flair-default::before      { background-position:   0px   0px }
 .flair-gen2::before         { background-position:   0px -24px }
 .flair-pokeball::before     { background-position: -24px   0px }
@@ -43,6 +45,7 @@
 .flair-ovalcharm1::before   { background-position: -456px -24px }
 .flair-shinycharm::before   { background-position: -480px  0px }
 .flair-shinycharm1::before  { background-position: -480px -24px }
+.flair-involvement::before  { background-position: -504px -24px }
 
 /* Egg flairs — eggflairs.png spritesheet (22×22 per sprite) */
 .flair-lucky::before, .flair-egg::before, .flair-eevee::before,
@@ -85,5 +88,3 @@
 .flair-beautyribbon::after { background-position: -44px 0 }
 .flair-smartribbon::after  { background-position: -66px 0 }
 .flair-toughribbon::after  { background-position: -88px 0 }
-
-/* Involvement flair has no sprite — text only */
