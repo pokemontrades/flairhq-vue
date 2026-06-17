@@ -6,6 +6,6 @@ import org.springframework.session.data.mongo.config.annotation.web.http.EnableM
 
 @Profile("!test")
 @Configuration
-@EnableMongoHttpSession(maxInactiveIntervalInSeconds = 300)
+@EnableMongoHttpSession(maxInactiveIntervalInSeconds = 15552000) // 6 months
 public class SessionConfig {
 }

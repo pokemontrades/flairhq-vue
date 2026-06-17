@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.ptrades.flairhq.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.ptrades.flairhq.repository.domain.User;
 import org.ptrades.flairhq.service.RedditApiService;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,6 +28,7 @@ import org.springframework.web.util.HtmlUtils;
 @Component
 public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
+    private static final Logger log = LoggerFactory.getLogger(OAuth2LoginSuccessHandler.class);
     private static final int SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 180; // 6 months
 
     private final UserRepository   userRepository;
@@ -58,8 +61,14 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
             return;
         }
 
-        List<String> modPermissions = redditApiService.getModeratorPermissions(
-                redditApiService.getAdminRefreshToken(), username, "pokemontrades");
+        List<String> modPermissions;
+        try {
+            modPermissions = redditApiService.getModeratorPermissions(
+                    redditApiService.getAdminRefreshToken(), username, "pokemontrades");
+        } catch (Exception e) {
+            log.warn("Could not fetch mod permissions for user='{}' — proceeding without: {}", username, e.getMessage());
+            modPermissions = List.of();
+        }
 
         // Build authorities from Reddit mod permissions — these live in the session,
         // not the DB, so a DB write cannot grant privileged access.

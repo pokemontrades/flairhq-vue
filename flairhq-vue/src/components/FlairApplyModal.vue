@@ -46,6 +46,7 @@ watch(() => props.modelValue, async (open) => {
   if (!open) return
   selectedId.value = null
   error.value = null
+  flairs.value = []
   loading.value = true
   try {
     const [flairRes, appRes, meRes, countsRes] = await Promise.all([
@@ -54,13 +55,16 @@ watch(() => props.modelValue, async (open) => {
       apiFetch(`${API_BASE}/api/users/me`),
       apiFetch(`${API_BASE}/api/references/me/counts`),
     ])
-    if (flairRes.ok)   flairs.value    = await flairRes.json()
+    if (!flairRes.ok) throw new Error('Failed to load flairs')
+    flairs.value    = await flairRes.json()
     if (appRes.ok)     myApps.value    = await appRes.json()
     if (countsRes.ok)  refCounts.value = await countsRes.json()
     if (meRes.ok) {
       const me = await meRes.json()
       myCssClass.value = me.flair?.ptrades?.flairCssClass ?? ''
     }
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : 'Failed to load flairs'
   } finally {
     loading.value = false
   }
