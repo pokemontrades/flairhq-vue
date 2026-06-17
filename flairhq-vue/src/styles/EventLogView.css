@@ -68,7 +68,7 @@
 .event-row {
   display: grid;
   grid-template-columns: 110px 160px 1fr 180px;
-  align-items: center;
+  align-items: start;
   gap: 1rem;
   padding: 0.6rem 1rem;
   background: var(--color-background-soft);
@@ -105,9 +105,7 @@
 
 .col-content {
   color: var(--color-text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  word-break: break-word;
 }
 
 .col-time {
