@@ -2,7 +2,7 @@
 import { onMounted, onUnmounted, computed, ref, reactive, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
-import { useReferenceStore, REFERENCE_CATEGORIES } from '../stores/references'
+import { useReferenceStore, REFERENCE_CATEGORIES, ADDABLE_REFERENCE_CATEGORIES } from '../stores/references'
 import type { Reference } from '../stores/references'
 import { useRejectionReasonStore } from '../stores/rejectionReasons'
 import { apiFetch, API_BASE } from '../lib/apiFetch'
@@ -117,6 +117,11 @@ onMounted(async () => {
 onUnmounted(() => document.removeEventListener('click', closeMenu))
 
 const isMod     = computed(() => auth.effectiveIsMod)
+
+const addableTypes = new Set(ADDABLE_REFERENCE_CATEGORIES.map(c => c.type))
+const addablePendingReciprocal = computed(() =>
+  refStore.pendingReciprocal.filter(r => addableTypes.has(r.type))
+)
 const totalRefs = computed(() =>
   refStore.references.filter(r => !r.rejected && (!r.mustFix || isMod.value || isOwnProfile.value)).length
 )
@@ -445,7 +450,7 @@ function onFlairTextSaved() {
       @saved="onRefSaved"
     />
 
-    <section v-if="isOwnProfile && refStore.pendingReciprocal.length > 0" class="reciprocal-section" :class="{ 'reciprocal-section--collapsed': userProfile.hideReciprocalSection }">
+    <section v-if="isOwnProfile && addablePendingReciprocal.length > 0" class="reciprocal-section" :class="{ 'reciprocal-section--collapsed': userProfile.hideReciprocalSection }">
       <div class="reciprocal-header">
         <div>
           <h2 class="reciprocal-title">Add Your Reference</h2>
@@ -457,7 +462,7 @@ function onFlairTextSaved() {
       </div>
       <div v-if="!userProfile.hideReciprocalSection" class="ref-list">
         <div
-          v-for="r in refStore.pendingReciprocal"
+          v-for="r in addablePendingReciprocal"
           :key="r.id"
           class="ref-row reciprocal-row"
         >
