@@ -712,3 +712,11 @@
     font-size: 0.95rem;
   }
 }
+
+.profile-flair-sprite {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  min-width: 24px;
+  min-height: 24px;
+}

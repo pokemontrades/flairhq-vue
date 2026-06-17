@@ -147,6 +147,10 @@ const hasPokeBallOrHigher = computed(() => {
   return !BELOW_POKEBALL.has(primary) && primary !== ''
 })
 
+const flairTokens = computed(() =>
+  userProfile.value.flairCssClass?.split(' ').filter(Boolean) ?? []
+)
+
 const openSections = reactive<Set<string>>(new Set())
 
 function initOpenSections() {
@@ -352,6 +356,12 @@ function onFlairTextSaved() {
               <path fill="#fff" d="M16.67 10a1.46 1.46 0 0 0-2.47-1 7.12 7.12 0 0 0-3.85-1.23l.65-3.08 2.13.45a1 1 0 1 0 .18-.93l-2.38-.5a.27.27 0 0 0-.32.2l-.73 3.44a7.14 7.14 0 0 0-3.89 1.23 1.46 1.46 0 1 0-1.61 2.39 2.87 2.87 0 0 0 0 .44c0 2.24 2.61 4.06 5.83 4.06s5.83-1.82 5.83-4.06a2.87 2.87 0 0 0 0-.44 1.46 1.46 0 0 0 .55-1.97zM7.27 11a1 1 0 1 1 1 1 1 1 0 0 1-1-1zm5.58 2.71a3.58 3.58 0 0 1-2.85.86 3.58 3.58 0 0 1-2.85-.86.19.19 0 0 1 .27-.27 3.24 3.24 0 0 0 2.58.72 3.24 3.24 0 0 0 2.58-.72.19.19 0 1 1 .27.27zm-.14-1.71a1 1 0 1 1 1-1 1 1 0 0 1-1 1z"/>
             </svg>
           </a>
+          <span
+            v-for="token in flairTokens"
+            :key="token"
+            :class="`flair-${token}`"
+            class="profile-flair-sprite"
+          ></span>
           <a
             v-if="isOwnProfile && userProfile.flairText"
             :href="`${API_BASE}/api/discord/authorize`"
