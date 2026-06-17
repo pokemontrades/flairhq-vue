@@ -10,5 +10,10 @@ import lombok.Setter;
 public class UserFlair {
 
     private SubredditFlair ptrades;
-    
+
+    public SubredditFlair getOrInitPtrades() {
+        if (ptrades == null) ptrades = new SubredditFlair();
+        return ptrades;
+    }
+
 }

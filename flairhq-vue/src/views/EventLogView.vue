@@ -91,7 +91,7 @@ function nextPage() { if (page.value < totalPages.value - 1) { page.value++; loa
 function typeLabel(type: string) { return TYPE_LABELS[type] ?? type }
 function typeColor(type: string) { return TYPE_COLORS[type] ?? 'default' }
 
-function formatDate(iso: string) {
+function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
 }
 
@@ -150,7 +150,7 @@ onMounted(load)
             <UserLink :username="ev.user" />
           </span>
           <span class="col-content">{{ ev.content }}</span>
-          <span class="col-time">{{ formatDate(ev.createdAt) }}</span>
+          <span class="col-time">{{ formatDateTime(ev.createdAt) }}</span>
         </div>
       </div>
 

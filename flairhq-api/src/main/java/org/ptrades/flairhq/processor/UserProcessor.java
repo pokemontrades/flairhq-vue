@@ -116,8 +116,8 @@ public class UserProcessor {
             return u;
         });
 
-        UserFlair      userFlair = user.getFlair() != null ? user.getFlair() : new UserFlair();
-        SubredditFlair ptrades   = userFlair.getPtrades() != null ? userFlair.getPtrades() : new SubredditFlair();
+        UserFlair      userFlair = user.getOrInitFlair();
+        SubredditFlair ptrades   = userFlair.getOrInitPtrades();
 
         String pCss      = ptrades.getFlairCssClass() != null ? ptrades.getFlairCssClass() : "default";
         String flairText = flairService.makeNewFlairText(pCss, request.getPtrades());
@@ -143,14 +143,6 @@ public class UserProcessor {
     public void banUser(String username, BanRequest request) {
         request.setUsername(username);
         banService.executeBan(request);
-    }
-
-    public UserResponse setLocalBan(String username, boolean banned) {
-        User user = userRepository.findById(Objects.requireNonNull(username))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        user.setBanned(banned);
-        user.setUpdatedAt(Instant.now());
-        return userMapper.toResponse(userRepository.save(user));
     }
 
     /** Expires all active sessions for the given username. The next request from that user returns 401.

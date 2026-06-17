@@ -30,4 +30,9 @@ public class User {
     private Instant createdAt;
     private Instant updatedAt;
 
+    public UserFlair getOrInitFlair() {
+        if (flair == null) flair = new UserFlair();
+        return flair;
+    }
+
 }

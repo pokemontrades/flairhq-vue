@@ -137,8 +137,8 @@ public class ApplicationProcessor {
         User user = userRepository.findById(Objects.requireNonNull(app.getUser()))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
-        UserFlair      userFlair = user.getFlair() != null ? user.getFlair() : new UserFlair();
-        SubredditFlair ptrades   = userFlair.getPtrades() != null ? userFlair.getPtrades() : new SubredditFlair();
+        UserFlair      userFlair = user.getOrInitFlair();
+        SubredditFlair ptrades   = userFlair.getOrInitPtrades();
         String currentCss        = ptrades.getFlairCssClass() != null ? ptrades.getFlairCssClass() : "";
         String newCss            = flairService.makeNewCssClass(currentCss, app.getFlair());
 

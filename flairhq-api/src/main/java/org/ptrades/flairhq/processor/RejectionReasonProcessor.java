@@ -39,10 +39,7 @@ public class RejectionReasonProcessor {
     }
 
     public void delete(String id) {
-        if (!repository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        }
-        repository.deleteById(id);
+        ProcessorUtils.deleteOrThrow(repository, id);
     }
 
 }

@@ -1,5 +1,6 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
+import { withLoading } from '../composables/useAsyncLoad'
 
 export interface RedditUser {
   name: string
@@ -24,28 +25,14 @@ export const useAuthStore = defineStore('auth', () => {
    * OAuth redirect lands back on the frontend.
    */
   async function fetchMe() {
-    loading.value = true
-    error.value = null
-
-    try {
+    await withLoading(loading, error, async () => {
       const res = await fetch(`${API_BASE}/api/auth/me`, {
         credentials: 'include', // send the JSESSIONID cookie cross-origin
       })
-
-      if (res.status === 401) {
-        user.value = null
-        return
-      }
-
+      if (res.status === 401) { user.value = null; return }
       if (!res.ok) throw new Error(`Unexpected response: ${res.status}`)
-
       user.value = await res.json()
-    } catch (e) {
-      error.value = e instanceof Error ? e.message : 'Failed to load session'
-      user.value = null
-    } finally {
-      loading.value = false
-    }
+    }, 'Failed to load session')
   }
 
   function clearSession() {

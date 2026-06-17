@@ -96,18 +96,7 @@ public class UserController {
     }
 
     @PreAuthorize("@modSecurity.hasPermission(authentication, 'flair')")
-    @PutMapping("/{username}/local-ban")
-    // TODO: Review usage — not referenced by flairhq-vue frontend.
-    public ResponseEntity<UserResponse> setLocalBan(
-            @PathVariable String username,
-            @RequestParam boolean banned) {
-        log.info("Setting local ban for user='{}' banned={}", username, banned);
-        return ResponseEntity.ok(userProcessor.setLocalBan(username, banned));
-    }
-
-    @PreAuthorize("@modSecurity.hasPermission(authentication, 'flair')")
     @PostMapping("/{username}/invalidate-session")
-    // TODO: Review usage — not referenced by flairhq-vue frontend.
     public ResponseEntity<Void> invalidateSession(@PathVariable String username) {
         int count = userProcessor.invalidateSessions(username);
         log.info("Invalidated {} session(s) for user='{}'", count, username);

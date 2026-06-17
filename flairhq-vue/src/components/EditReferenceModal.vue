@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { REFERENCE_CATEGORIES } from '../stores/references'
 import type { Reference } from '../stores/references'
 import { apiFetch, API_BASE } from '../lib/apiFetch'
+import { useReferenceForm } from '../composables/useReferenceForm'
 import BaseModal from './BaseModal.vue'
 
 const props = defineProps<{
@@ -30,34 +31,13 @@ const form = ref({
 const saving = ref(false)
 const error  = ref<string | null>(null)
 
-const SUBREDDIT_URL = /^https?:\/\/(www\.|old\.)?reddit\.com\/r\/pokemontrades\//i
 
-const isGiveaway  = computed(() => form.value.type === 'giveaway')
-const isDescType  = computed(() => form.value.type === 'involvement' || form.value.type === 'misc')
-const showPartner = computed(() => !isGiveaway.value)
-const showGaveGot = computed(() => !isGiveaway.value && !isDescType.value)
-const showDesc    = computed(() => isGiveaway.value || isDescType.value)
-const showNumber  = computed(() => isGiveaway.value)
-
-const touched    = ref(false)
-const urlTouched = ref(false)
-
-const urlError     = computed(() => {
-  if (!urlTouched.value) return null
-  const url = form.value.url.trim()
-  if (!url) return 'URL is required'
-  return SUBREDDIT_URL.test(url) ? null : 'URL must be from pokemontrades subreddit'
-})
-const typeError    = computed(() => touched.value && !form.value.type ? 'Type is required' : null)
-const partnerError = computed(() => touched.value && showPartner.value && !form.value.user2.trim() ? 'Trading partner is required' : null)
-const gaveError    = computed(() => touched.value && showGaveGot.value && !form.value.gave.trim() ? 'Required' : null)
-const gotError     = computed(() => touched.value && showGaveGot.value && !form.value.got.trim() ? 'Required' : null)
-const descError    = computed(() => touched.value && showDesc.value && !form.value.description.trim() ? 'Description is required' : null)
-const numberError  = computed(() => touched.value && showNumber.value && !(form.value.number > 0) ? 'Must be at least 1' : null)
-
-const hasErrors = computed(() =>
-  !!(urlError.value || typeError.value || partnerError.value || gaveError.value || gotError.value || descError.value || numberError.value)
-)
+const {
+  touched, urlTouched,
+  showPartner, showGaveGot, showDesc, showNumber,
+  urlError, typeError, partnerError, gaveError, gotError, descError, numberError,
+  hasErrors,
+} = useReferenceForm(form)
 
 watch(() => props.modelValue, (open) => {
   if (open && props.reference) {

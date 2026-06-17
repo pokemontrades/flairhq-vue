@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { apiFetch, API_BASE } from '../lib/apiFetch'
+import { withLoading } from '../composables/useAsyncLoad'
 
 export interface RejectionReason {
   id: string
@@ -13,19 +14,17 @@ export interface RejectionReason {
 export const useRejectionReasonStore = defineStore('rejectionReasons', () => {
   const reasons  = ref<RejectionReason[]>([])
   const loading  = ref(false)
+  const error    = ref<string | null>(null)
   const loaded   = ref(false)
 
   async function load() {
     if (loaded.value) return
-    loading.value = true
-    try {
+    await withLoading(loading, error, async () => {
       const res = await apiFetch(`${API_BASE}/api/rejection-reasons`)
       if (!res.ok) throw new Error(`${res.status}`)
       reasons.value = await res.json()
       loaded.value  = true
-    } finally {
-      loading.value = false
-    }
+    })
   }
 
   async function create(label: string, reason: string): Promise<string | null> {
@@ -72,5 +71,5 @@ export const useRejectionReasonStore = defineStore('rejectionReasons', () => {
     }
   }
 
-  return { reasons, loading, loaded, load, create, update, remove }
+  return { reasons, loading, error, loaded, load, create, update, remove }
 })

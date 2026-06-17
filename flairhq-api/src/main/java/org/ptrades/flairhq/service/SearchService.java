@@ -2,14 +2,10 @@ package org.ptrades.flairhq.service;
 
 import java.util.List;
 
-import org.ptrades.flairhq.dto.EventResponse;
-import org.ptrades.flairhq.dto.ModmailResponse;
 import org.ptrades.flairhq.dto.ReferenceResponse;
 import org.ptrades.flairhq.dto.UserResponse;
 import org.ptrades.flairhq.mapper.ReferenceMapper;
 import org.ptrades.flairhq.mapper.UserMapper;
-import org.ptrades.flairhq.repository.domain.Event;
-import org.ptrades.flairhq.repository.domain.Modmail;
 import org.ptrades.flairhq.repository.domain.Reference;
 import org.ptrades.flairhq.repository.domain.User;
 import org.springframework.data.domain.Sort;
@@ -54,43 +50,6 @@ public class SearchService {
         )).limit(LIMIT).with(Sort.by(Sort.Direction.DESC, "createdAt"));
         return mongoTemplate.find(query, Reference.class).stream()
                 .map(ref -> referenceMapper.toResponse(ref, false))
-                .toList();
-    }
-
-    public List<EventResponse> searchLogs(@NonNull String keyword) {
-        Query query = new Query(new Criteria().orOperator(
-                Criteria.where("content").regex(keyword, "i"),
-                Criteria.where("user").regex(keyword, "i"),
-                Criteria.where("type").regex(keyword, "i")
-        )).limit(LIMIT).with(Sort.by(Sort.Direction.DESC, "createdAt"));
-        return mongoTemplate.find(query, Event.class).stream()
-                .map(e -> EventResponse.builder()
-                        .id(e.getId())
-                        .type(e.getType())
-                        .user(e.getUser())
-                        .content(e.getContent())
-                        .createdAt(e.getCreatedAt())
-                        .updatedAt(e.getUpdatedAt())
-                        .build())
-                .toList();
-    }
-
-    public List<ModmailResponse> searchModmails(@NonNull String keyword) {
-        Query query = new Query(new Criteria().orOperator(
-                Criteria.where("author").regex(keyword, "i"),
-                Criteria.where("subject").regex(keyword, "i"),
-                Criteria.where("body").regex(keyword, "i")
-        )).limit(LIMIT).with(Sort.by(Sort.Direction.DESC, "createdAt"));
-        return mongoTemplate.find(query, Modmail.class).stream()
-                .map(m -> ModmailResponse.builder()
-                        .id(m.getId())
-                        .subject(m.getSubject())
-                        .body(m.getBody())
-                        .author(m.getAuthor())
-                        .subreddit(m.getSubreddit())
-                        .createdAt(m.getCreatedAt())
-                        .updatedAt(m.getUpdatedAt())
-                        .build())
                 .toList();
     }
 

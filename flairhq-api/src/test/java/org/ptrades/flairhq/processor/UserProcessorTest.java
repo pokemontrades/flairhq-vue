@@ -159,43 +159,6 @@ class UserProcessorTest {
         verify(eventRepository).save(any(Event.class));
     }
 
-    // ── setLocalBan ───────────────────────────────────────────────────────────
-
-    @Test
-    void setLocalBan_userNotFound_throwsNotFound() {
-        when(userRepository.findById("alice")).thenReturn(Optional.empty());
-
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
-                () -> processor.setLocalBan("alice", true));
-        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
-    }
-
-    @Test
-    void setLocalBan_found_updatesBannedFlag() {
-        User user = makeUser("alice");
-        when(userRepository.findById("alice")).thenReturn(Optional.of(user));
-        when(userRepository.save(user)).thenReturn(user);
-        when(userMapper.toResponse(user)).thenReturn(UserResponse.builder().build());
-
-        processor.setLocalBan("alice", true);
-
-        assertTrue(user.getBanned());
-        verify(userRepository).save(user);
-    }
-
-    @Test
-    void setLocalBan_unban_clearsBannedFlag() {
-        User user = makeUser("alice");
-        user.setBanned(true);
-        when(userRepository.findById("alice")).thenReturn(Optional.of(user));
-        when(userRepository.save(user)).thenReturn(user);
-        when(userMapper.toResponse(user)).thenReturn(UserResponse.builder().build());
-
-        processor.setLocalBan("alice", false);
-
-        assertFalse(user.getBanned());
-    }
-
     // ── invalidateSessions ────────────────────────────────────────────────────
 
     @Test

@@ -8,9 +8,7 @@ import org.ptrades.flairhq.dto.ModnoteResponse;
 import org.ptrades.flairhq.mapper.ModnoteMapper;
 import org.ptrades.flairhq.repository.ModnoteRepository;
 import org.ptrades.flairhq.repository.domain.Modnote;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class ModnoteProcessor {
@@ -37,9 +35,6 @@ public class ModnoteProcessor {
     }
 
     public void deleteModnote(String id) {
-        if (!modnoteRepository.existsById(Objects.requireNonNull(id))) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        }
-        modnoteRepository.deleteById(id);
+        ProcessorUtils.deleteOrThrow(modnoteRepository, Objects.requireNonNull(id));
     }
 }

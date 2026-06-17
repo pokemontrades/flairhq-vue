@@ -46,9 +46,6 @@ public class FlairProcessor {
     }
 
     public void deleteFlair(String id) {
-        if (!flairRepository.existsById(Objects.requireNonNull(id))) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        }
-        flairRepository.deleteById(id);
+        ProcessorUtils.deleteOrThrow(flairRepository, Objects.requireNonNull(id));
     }
 }

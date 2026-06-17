@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const API_BASE = import.meta.env.VITE_API_BASE_URL as string
+import { API_BASE } from '../lib/apiFetch'
 
 function signInWithReddit() {
   // Hand off to the backend — Spring Security handles the full OAuth2 flow

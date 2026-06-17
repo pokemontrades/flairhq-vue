@@ -225,10 +225,7 @@ public class ReferenceProcessor {
     }
 
     public void remove(@NonNull String id) {
-        if (!referenceRepository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        }
-        referenceRepository.deleteById(id);
+        ProcessorUtils.deleteOrThrow(referenceRepository, id);
     }
 
     /**
