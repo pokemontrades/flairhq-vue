@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
-import { apiFetch, API_BASE } from '../lib/apiFetch'
+import { apiJson } from '../lib/apiFetch'
 import type { Reference } from './references'
 import { withLoading } from '../composables/useAsyncLoad'
 
@@ -47,13 +47,11 @@ export const useSearchStore = defineStore('search', () => {
     lastQuery.value = q
     lastType.value  = type
     await withLoading(loading, error, async () => {
-      const res = await apiFetch(`${API_BASE}/api/search/${type}?q=${encodeURIComponent(q)}`)
-      if (!res.ok) throw new Error(`${res.status}`)
-      const data = await res.json()
-      if (type === 'users')      userResults.value      = data
-      if (type === 'references') referenceResults.value = data
-      if (type === 'logs')       logResults.value       = data
-      if (type === 'modmails')   modmailResults.value   = data
+      const data = await apiJson(`/api/search/${type}?q=${encodeURIComponent(q)}`)
+      if (type === 'users')      userResults.value      = data as UserResult[]
+      if (type === 'references') referenceResults.value = data as Reference[]
+      if (type === 'logs')       logResults.value       = data as LogResult[]
+      if (type === 'modmails')   modmailResults.value   = data as ModmailResult[]
     }, 'Search failed')
   }
 

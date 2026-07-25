@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
-import { apiFetch, API_BASE } from '../lib/apiFetch'
+import { apiJson } from '../lib/apiFetch'
 import { withLoading } from '../composables/useAsyncLoad'
 
 export interface Application {
@@ -21,27 +21,26 @@ export const useApplicationStore = defineStore('applications', () => {
 
   async function load() {
     await withLoading(loading, error, async () => {
-      const res = await apiFetch(`${API_BASE}/api/applications`)
-      if (!res.ok) throw new Error(`${res.status}`)
-      applications.value = await res.json()
+      applications.value = await apiJson<Application[]>('/api/applications')
     }, 'Failed to load applications')
   }
 
+  /** Returns an error message on failure, or null on success. */
   async function approve(id: string): Promise<string | null> {
-    const res = await apiFetch(`${API_BASE}/api/applications/${id}/approve`, { method: 'POST' })
-    if (!res.ok) {
-      const body = await res.json().catch(() => null)
-      return (body?.message as string) || `Error ${res.status}`
+    try {
+      await apiJson(`/api/applications/${id}/approve`, { method: 'POST' })
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : ''
+      return /^\d+$/.test(msg) ? `Error ${msg}` : msg || 'Approval failed'
     }
     await load()
     return null
   }
 
   async function deny(id: string, note?: string) {
-    await apiFetch(`${API_BASE}/api/applications/${id}/deny`, {
+    await apiJson(`/api/applications/${id}/deny`, {
       method: 'POST',
-      headers: note ? { 'Content-Type': 'application/json' } : {},
-      body: note ? JSON.stringify({ note }) : undefined,
+      ...(note ? { json: { note } } : {}),
     })
     applications.value = applications.value.filter(a => a.id !== id)
   }

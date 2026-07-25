@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { apiFetch, API_BASE } from '../lib/apiFetch'
+import { apiFetch, apiJson, API_BASE } from '../lib/apiFetch'
 import BaseModal from './BaseModal.vue'
 
 interface Flair {
@@ -49,20 +49,17 @@ watch(() => props.modelValue, async (open) => {
   flairs.value = []
   loading.value = true
   try {
-    const [flairRes, appRes, meRes, countsRes] = await Promise.all([
-      apiFetch(`${API_BASE}/api/flairs`),
-      apiFetch(`${API_BASE}/api/applications/me`),
-      apiFetch(`${API_BASE}/api/users/me`),
-      apiFetch(`${API_BASE}/api/references/me/counts`),
+    // Flairs are required; the rest degrade gracefully if they fail to load.
+    const [flairList, apps, me, counts] = await Promise.all([
+      apiJson<Flair[]>('/api/flairs').catch(() => { throw new Error('Failed to load flairs') }),
+      apiJson<PendingApp[]>('/api/applications/me').catch(() => null),
+      apiJson<{ flair?: { ptrades?: { flairCssClass?: string } } }>('/api/users/me').catch(() => null),
+      apiJson<RefCounts>('/api/references/me/counts').catch(() => null),
     ])
-    if (!flairRes.ok) throw new Error('Failed to load flairs')
-    flairs.value    = await flairRes.json()
-    if (appRes.ok)     myApps.value    = await appRes.json()
-    if (countsRes.ok)  refCounts.value = await countsRes.json()
-    if (meRes.ok) {
-      const me = await meRes.json()
-      myCssClass.value = me.flair?.ptrades?.flairCssClass ?? ''
-    }
+    flairs.value = flairList
+    if (apps)   myApps.value    = apps
+    if (counts) refCounts.value = counts
+    if (me)     myCssClass.value = me.flair?.ptrades?.flairCssClass ?? ''
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Failed to load flairs'
   } finally {

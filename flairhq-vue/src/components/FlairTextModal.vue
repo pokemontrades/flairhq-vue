@@ -59,12 +59,18 @@ function parseCurrentFlair(text: string) {
   }
 }
 
+/**
+ * Parses a flair games string like "Ash (X, SW), Red" into one entry per
+ * (IGN, game) pair. Group 1 is the IGN, optional group 2 the comma-separated
+ * game list in parentheses; an IGN without games becomes a single entry with
+ * an empty game.
+ */
 function parseGamesString(str: string): GameEntry[] {
   const result: GameEntry[] = []
   const re = /([^,(]+?)(?:\s*\(([^)]+)\))?(?:,\s*|$)/g
   let m: RegExpExecArray | null
   while ((m = re.exec(str)) !== null) {
-    const ign = m[1].trim()
+    const ign = m[1]?.trim()
     if (!ign) continue
     const gameList = m[2] ? m[2].split(',').map(g => g.trim()) : ['']
     for (const game of gameList) result.push({ ign, game })
@@ -79,7 +85,8 @@ function removeGame(i: number) { games.value.splice(i, 1) }
 
 function onConsoleChange(i: number) {
   const entry = fcs.value[i]
-  const raw   = entry.value.replace(/^SW-/, '')
+  if (!entry) return
+  const raw = entry.value.replace(/^SW-/, '')
   if (entry.console === 'Switch') {
     entry.value = raw ? `SW-${raw}` : ''
   } else {
@@ -87,8 +94,10 @@ function onConsoleChange(i: number) {
   }
 }
 
+/** Reformats a friend code as the user types: digits only, dashed in groups of 4, SW- prefix for Switch. */
 function formatFc(i: number) {
-  const entry   = fcs.value[i]
+  const entry = fcs.value[i]
+  if (!entry) return
   const isSwitch = entry.console === 'Switch'
   const digits  = entry.value.replace(/^SW-/, '').replace(/\D/g, '').slice(0, 12)
   const parts   = digits.match(/.{1,4}/g) ?? []
@@ -133,7 +142,7 @@ const validationError = computed<string | null>(() => {
   for (const g of games.value) {
     if (!g.ign.trim()) continue
     if (g.ign.length > 12) return 'In-game names must be 12 characters or fewer.'
-    if (/[()|\,:]/g.test(g.ign)) return 'In-game name contains an illegal character: ( ) | , or :'
+    if (/[()|,:]/g.test(g.ign)) return 'In-game name contains an illegal character: ( ) | , or :'
   }
   if (preview.value.length > MAX_LEN) return `Flair text is too long (${preview.value.length}/${MAX_LEN}). Remove a friend code or game.`
   return null

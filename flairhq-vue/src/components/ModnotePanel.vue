@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { apiFetch, API_BASE } from '../lib/apiFetch'
+import { apiJson } from '../lib/apiFetch'
 import { formatDate } from '../lib/format'
-import Pagination from './Pagination.vue'
+import PaginationBar from './PaginationBar.vue'
 
 interface Modnote {
   id: string
@@ -36,9 +36,7 @@ async function load() {
   loading.value = true
   error.value = null
   try {
-    const res = await apiFetch(`${API_BASE}/api/modnotes?refUser=${encodeURIComponent(props.refUser)}`)
-    if (!res.ok) throw new Error(`${res.status}`)
-    notes.value = await res.json()
+    notes.value = await apiJson<Modnote[]>(`/api/modnotes?refUser=${encodeURIComponent(props.refUser)}`)
   } catch {
     error.value = 'Failed to load mod notes.'
   } finally {
@@ -49,8 +47,7 @@ async function load() {
 async function deleteNote(id: string) {
   deleting.value.push(id)
   try {
-    const res = await apiFetch(`${API_BASE}/api/modnotes/${encodeURIComponent(id)}`, { method: 'DELETE' })
-    if (!res.ok) throw new Error(`${res.status}`)
+    await apiJson(`/api/modnotes/${encodeURIComponent(id)}`, { method: 'DELETE' })
     notes.value = notes.value.filter(n => n.id !== id)
   } catch {
     error.value = 'Failed to delete note.'
@@ -94,7 +91,7 @@ async function deleteNote(id: string) {
       </li>
     </ul>
 
-    <Pagination
+    <PaginationBar
       v-if="notes.length > PAGE_SIZE"
       v-model="currentPage"
       :total="totalPages"

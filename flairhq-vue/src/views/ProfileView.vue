@@ -2,11 +2,12 @@
 import { onMounted, onUnmounted, computed, ref, reactive, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
-import { useReferenceStore, REFERENCE_CATEGORIES, ADDABLE_REFERENCE_CATEGORIES } from '../stores/references'
+import { useReferenceStore, REFERENCE_CATEGORIES, ADDABLE_REFERENCE_CATEGORIES, referenceTypeLabel } from '../stores/references'
 import type { Reference } from '../stores/references'
 import { useRejectionReasonStore } from '../stores/rejectionReasons'
-import { apiFetch, API_BASE } from '../lib/apiFetch'
+import { apiJson, API_BASE } from '../lib/apiFetch'
 import { formatDate } from '../lib/format'
+import { useToggleSet } from '../composables/useToggleSet'
 import AddReferenceModal from '../components/AddReferenceModal.vue'
 import EditProfileModal from '../components/EditProfileModal.vue'
 import EditReferenceModal from '../components/EditReferenceModal.vue'
@@ -26,7 +27,14 @@ interface UserProfile {
   hideReciprocalSection: boolean
 }
 
-const BELOW_POKEBALL = new Set(['default', 'gen2', 'gen21'])
+/** Shape of the relevant fields in the /api/users responses. */
+interface UserDto {
+  iconImg?: string | null
+  intro?: string | null
+  friendCodes?: string[]
+  hideReciprocalSection?: boolean
+  flair?: { ptrades?: { flairText?: string | null; flairCssClass?: string | null } }
+}
 
 const route           = useRoute()
 const router          = useRouter()
@@ -64,11 +72,7 @@ async function toggleReciprocalSection() {
   const next = !userProfile.value.hideReciprocalSection
   userProfile.value.hideReciprocalSection = next
   try {
-    await apiFetch(`${API_BASE}/api/users/me`, {
-      method:  'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ hideReciprocalSection: next }),
-    })
+    await apiJson('/api/users/me', { method: 'PUT', json: { hideReciprocalSection: next } })
   } catch { /* non-critical — preference is updated locally regardless */ }
 }
 
@@ -89,20 +93,16 @@ function onRefSaved(updated: Reference) {
 
 async function loadProfile(name: string, own: boolean) {
   try {
-    const url = own ? `${API_BASE}/api/users/me` : `${API_BASE}/api/users/${name}`
-    const res = await apiFetch(url)
-    if (res.ok) {
-      const data = await res.json()
-      userProfile.value = {
-        iconImg:                data.iconImg ?? null,
-        intro:                  data.intro ?? null,
-        friendCodes:            data.friendCodes ?? [],
-        flairText:              data.flair?.ptrades?.flairText ?? null,
-        flairCssClass:          data.flair?.ptrades?.flairCssClass ?? null,
-        hideReciprocalSection:  data.hideReciprocalSection ?? false,
-      }
-      initOpenSections()
+    const data = await apiJson<UserDto>(own ? '/api/users/me' : `/api/users/${name}`)
+    userProfile.value = {
+      iconImg:                data.iconImg ?? null,
+      intro:                  data.intro ?? null,
+      friendCodes:            data.friendCodes ?? [],
+      flairText:              data.flair?.ptrades?.flairText ?? null,
+      flairCssClass:          data.flair?.ptrades?.flairCssClass ?? null,
+      hideReciprocalSection:  data.hideReciprocalSection ?? false,
     }
+    initOpenSections()
   } catch { /* non-critical — profile display degrades gracefully */ }
   if (openSections.size === 0) initOpenSections()
 }
@@ -140,30 +140,24 @@ function visibleRefs(type: import('../stores/references').ReferenceType) {
   return refStore.byType[type].filter(r => !r.mustFix || isMod.value || isOwnProfile.value)
 }
 
-const hasPokeBallOrHigher = computed(() => {
-  const css = userProfile.value.flairCssClass
-  if (!css) return false
-  const primary = (css.split(' ')[0] ?? '').replace(/1$/, '')
-  return !BELOW_POKEBALL.has(primary) && primary !== ''
-})
-
 const flairTokens = computed(() =>
   userProfile.value.flairCssClass?.split(' ').filter(Boolean) ?? []
 )
 
-const openSections = reactive<Set<string>>(new Set())
+const { set: openSections, toggle: toggleSection } = useToggleSet()
 
 function initOpenSections() {
   openSections.clear()
 }
 
-function toggleSection(type: string) {
-  if (openSections.has(type)) openSections.delete(type)
-  else openSections.add(type)
-}
-
 const postTitles = reactive<Record<string, string>>({})
 
+/**
+ * Fetches Reddit post titles for giveaway references so the list can show the
+ * thread title instead of a bare URL. Uses Reddit's public `<permalink>.json`
+ * endpoint directly (no auth needed) and caches results in postTitles by ref id.
+ * Failures are ignored — the URL still renders as a link without a title.
+ */
 async function fetchGiveawayTitles(refs: typeof refStore.references) {
   const giveaways = refs.filter(r => r.type === 'giveaway' && r.url && !(r.id in postTitles))
   await Promise.allSettled(giveaways.map(async r => {
@@ -178,19 +172,25 @@ async function fetchGiveawayTitles(refs: typeof refStore.references) {
   }))
 }
 
+// Other pages deep-link here with ?action=… to open a modal (e.g. the pending
+// reciprocal page passes action=addRef plus prefill fields). Consume the query
+// params, open the modal, then strip them from the URL.
 watch(() => route.query.action, (action) => {
-  if (action === 'addRef' && isOwnProfile.value) {
+  if (!isOwnProfile.value || typeof action !== 'string') return
+  if (action === 'addRef') {
+    const q = route.query
+    const s = (v: unknown) => (typeof v === 'string' && v ? v : undefined)
+    addRefPrefill.value = {
+      url: s(q.url), user2: s(q.user2), type: s(q.type), gave: s(q.gave), got: s(q.got),
+    }
     showAddRefModal.value = true
-    router.replace({ query: { ...route.query, action: undefined } })
   }
-  if (action === 'applyFlair' && isOwnProfile.value) {
-    showFlairModal.value = true
-    router.replace({ query: { ...route.query, action: undefined } })
-  }
-  if (action === 'setFlairText' && isOwnProfile.value) {
-    showFlairTextModal.value = true
-    router.replace({ query: { ...route.query, action: undefined } })
-  }
+  if (action === 'applyFlair')   showFlairModal.value     = true
+  if (action === 'setFlairText') showFlairTextModal.value = true
+  router.replace({ query: {
+    ...route.query,
+    action: undefined, url: undefined, user2: undefined, type: undefined, gave: undefined, got: undefined,
+  } })
 }, { immediate: true })
 
 watch(() => userProfile.value.intro, async () => {
@@ -211,21 +211,14 @@ watch(() => refStore.references, (refs) => {
 
 watch(isMod, (mod) => { if (mod) reasonStore.load() }, { immediate: true })
 
+// Per-reference busy state: `approving` drives the Approve button spinner,
+// `actioning` everything else (menu actions), so the two don't disable each other.
 const approving         = reactive<Set<string>>(new Set())
 const actioning         = reactive<Set<string>>(new Set())
 const openMenuId        = ref<string | null>(null)
-const expandedReasons   = reactive<Set<string>>(new Set())
-const expandedNotes     = reactive<Set<string>>(new Set())
+const { set: expandedReasons, toggle: toggleReason } = useToggleSet()
+const { set: expandedNotes,   toggle: toggleNote }   = useToggleSet()
 
-function toggleReason(id: string) {
-  if (expandedReasons.has(id)) expandedReasons.delete(id)
-  else expandedReasons.add(id)
-}
-
-function toggleNote(id: string) {
-  if (expandedNotes.has(id)) expandedNotes.delete(id)
-  else expandedNotes.add(id)
-}
 const mustFixTargetId  = ref<string | null>(null)
 const mustFixReason    = ref('')
 const rejectTargetId   = ref<string | null>(null)
@@ -239,13 +232,27 @@ function closeMenu() {
   openMenuId.value = null
 }
 
-async function approveRef(id: string) {
-  approving.add(id)
+/** Runs a store action while tracking the reference id in `busy` so its buttons can disable. */
+async function withBusy(busy: Set<string>, id: string, fn: () => Promise<void>) {
+  busy.add(id)
   try {
-    await refStore.approve(id)
+    await fn()
   } finally {
-    approving.delete(id)
+    busy.delete(id)
   }
+}
+
+const approveRef   = (id: string) => withBusy(approving, id, () => refStore.approve(id))
+const unapproveRef = (id: string) => withBusy(actioning, id, () => refStore.unapprove(id))
+
+function setPendingRef(id: string) {
+  closeMenu()
+  return withBusy(actioning, id, () => refStore.setPending(id))
+}
+
+function removeRef(id: string) {
+  closeMenu()
+  return withBusy(actioning, id, () => refStore.remove(id))
 }
 
 function rejectRef(id: string) {
@@ -258,12 +265,7 @@ async function submitReject() {
   const id = rejectTargetId.value
   if (!id) return
   rejectTargetId.value = null
-  actioning.add(id)
-  try {
-    await refStore.reject(id, rejectReason.value || undefined)
-  } finally {
-    actioning.delete(id)
-  }
+  await withBusy(actioning, id, () => refStore.reject(id, rejectReason.value || undefined))
 }
 
 function mustFixRef(id: string) {
@@ -276,41 +278,7 @@ async function submitMustFix() {
   const id = mustFixTargetId.value
   if (!id) return
   mustFixTargetId.value = null
-  actioning.add(id)
-  try {
-    await refStore.markMustFix(id, mustFixReason.value)
-  } finally {
-    actioning.delete(id)
-  }
-}
-
-async function setPendingRef(id: string) {
-  closeMenu()
-  actioning.add(id)
-  try {
-    await refStore.setPending(id)
-  } finally {
-    actioning.delete(id)
-  }
-}
-
-async function unapproveRef(id: string) {
-  actioning.add(id)
-  try {
-    await refStore.unapprove(id)
-  } finally {
-    actioning.delete(id)
-  }
-}
-
-async function removeRef(id: string) {
-  closeMenu()
-  actioning.add(id)
-  try {
-    await refStore.remove(id)
-  } finally {
-    actioning.delete(id)
-  }
+  await withBusy(actioning, id, () => refStore.markMustFix(id, mustFixReason.value))
 }
 
 async function approveAll(type: string) {
@@ -329,11 +297,11 @@ function onProfileSaved(data: { intro: string; friendCodes: string[] }) {
 
 function onFlairTextSaved() {
   // Refetch to get the full updated flairText (server prepends emoji prefix)
-  apiFetch(`${API_BASE}/api/users/me`)
-    .then(r => r.ok ? r.json() : null)
+  apiJson<UserDto>('/api/users/me')
     .then(data => {
-      if (data) userProfile.value = { ...userProfile.value, flairText: data.flair?.ptrades?.flairText ?? null }
+      userProfile.value = { ...userProfile.value, flairText: data.flair?.ptrades?.flairText ?? null }
     })
+    .catch(() => { /* non-critical — flair text just stays stale until reload */ })
 }
 </script>
 
@@ -480,7 +448,7 @@ function onFlairTextSaved() {
             :to="{ name: 'userProfile', params: { username: r.user } }"
             class="ref-partner-link"
           >u/{{ r.user }}</RouterLink>
-          <span class="ref-type-tag">{{ REFERENCE_CATEGORIES.find(c => c.type === r.type)?.label ?? r.type }}</span>
+          <span class="ref-type-tag">{{ referenceTypeLabel(r.type) }}</span>
           <span v-if="r.gave || r.got" class="ref-trade">{{ r.gave }} → {{ r.got }}</span>
           <span v-else-if="r.description" class="ref-trade">{{ r.description }}</span>
           <div class="ref-meta">

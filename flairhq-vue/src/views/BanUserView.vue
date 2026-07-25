@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { apiFetch, API_BASE } from '../lib/apiFetch'
+import { useRoute } from 'vue-router'
+import { apiJson } from '../lib/apiFetch'
 import ModNav from '../components/ModNav.vue'
 
-const route  = useRoute()
-const router = useRouter()
+const route = useRoute()
 
 const APPEALS_SUFFIX = '\n\n***\n**Please review [this page](https://www.reddit.com/r/pokemontrades/wiki/appeals) for important information before replying or taking any other action.**'
 const USERNAME_RE    = /^[A-Za-z0-9_-]{1,20}$/
@@ -96,15 +95,7 @@ async function submit() {
   }
 
   try {
-    const res = await apiFetch(`${API_BASE}/api/users/${encodeURIComponent(user)}/ban`, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify(body),
-    })
-    if (!res.ok) {
-      const text = await res.text().catch(() => '')
-      throw new Error(text || `${res.status}`)
-    }
+    await apiJson(`/api/users/${encodeURIComponent(user)}/ban`, { method: 'POST', json: body })
     success.value = true
     resetForm()
   } catch (e) {

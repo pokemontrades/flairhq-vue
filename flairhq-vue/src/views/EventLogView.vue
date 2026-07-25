@@ -2,6 +2,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiFetch, API_BASE } from '../lib/apiFetch'
+import { formatDateTime } from '../lib/format'
 import ModNav from '../components/ModNav.vue'
 import UserLink from '../components/UserLink.vue'
 
@@ -91,10 +92,6 @@ function nextPage() { if (page.value < totalPages.value - 1) { page.value++; loa
 function typeLabel(type: string) { return TYPE_LABELS[type] ?? type }
 function typeColor(type: string) { return TYPE_COLORS[type] ?? 'default' }
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
-}
-
 const rangeStart = computed(() => page.value * PAGE_SIZE + 1)
 const rangeEnd   = computed(() => Math.min((page.value + 1) * PAGE_SIZE, total.value))
 
@@ -150,7 +147,7 @@ onMounted(load)
             <UserLink :username="ev.user" />
           </span>
           <span class="col-content">{{ ev.content }}</span>
-          <span class="col-time">{{ formatDate(ev.createdAt) }}</span>
+          <span class="col-time">{{ formatDateTime(ev.createdAt) }}</span>
         </div>
       </div>
 

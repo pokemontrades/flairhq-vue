@@ -46,3 +46,33 @@ export async function apiFetch(input: RequestInfo | URL, init?: RequestInit): Pr
 
   return res
 }
+
+/** `RequestInit` plus a `json` shorthand that sets the Content-Type header and serializes the body. */
+export interface ApiJsonInit extends RequestInit {
+  json?: unknown
+}
+
+/**
+ * JSON convenience wrapper around {@link apiFetch} for `/api/*` endpoints.
+ *
+ * - Prefixes `path` with API_BASE.
+ * - Throws on non-OK responses, preferring the body's `message` field over the bare status code.
+ * - Returns the parsed JSON body, or `undefined` for empty (e.g. 204) responses.
+ *
+ * Callers that branch on specific status codes (429, 403, …) should keep using apiFetch directly.
+ */
+export async function apiJson<T = unknown>(path: string, init?: ApiJsonInit): Promise<T> {
+  const { json, ...rest } = init ?? {}
+  if (json !== undefined) {
+    rest.headers = { 'Content-Type': 'application/json', ...(rest.headers as Record<string, string>) }
+    rest.body = JSON.stringify(json)
+  }
+
+  const res = await apiFetch(`${API_BASE}${path}`, rest)
+  if (!res.ok) {
+    const body = await res.json().catch(() => null)
+    throw new Error(body?.message ?? `${res.status}`)
+  }
+  const text = await res.text()
+  return (text ? JSON.parse(text) : undefined) as T
+}

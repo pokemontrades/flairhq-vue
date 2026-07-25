@@ -49,6 +49,8 @@ async function confirmDeny() {
   try {
     await appStore.deny(pendingDeny.value.id, denyNote.value.trim() || undefined)
     closeDenyModal()
+  } catch (e) {
+    showToast(e instanceof Error ? e.message : 'Deny failed', 'error')
   } finally {
     denying.value = false
   }

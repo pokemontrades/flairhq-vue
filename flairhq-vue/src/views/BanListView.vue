@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { apiFetch, API_BASE } from '../lib/apiFetch'
+import { apiJson } from '../lib/apiFetch'
 import ModNav from '../components/ModNav.vue'
 import StateMessage from '../components/StateMessage.vue'
 
@@ -17,9 +17,7 @@ onMounted(async () => {
   loading.value = true
   error.value   = null
   try {
-    const res = await apiFetch(`${API_BASE}/api/users?banned=true`)
-    if (!res.ok) throw new Error(`${res.status}`)
-    users.value = await res.json()
+    users.value = await apiJson<BannedUser[]>('/api/users?banned=true')
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Failed to load ban list'
   } finally {

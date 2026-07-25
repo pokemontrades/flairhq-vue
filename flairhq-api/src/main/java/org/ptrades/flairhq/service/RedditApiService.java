@@ -347,28 +347,20 @@ public class RedditApiService {
         String finalUrl = url + (url.contains("?") ? "&" : "?") + "raw_json=1";
 
         try {
-            ResponseEntity<JsonNode> response;
-            if ("GET".equalsIgnoreCase(method)) {
-                var spec = restClient.get()
-                        .uri(finalUrl)
-                        .header(HttpHeaders.USER_AGENT, userAgent);
-                if (finalUrl.contains("oauth.reddit.com")) {
-                    spec = spec.header(HttpHeaders.AUTHORIZATION,
-                            "bearer " + refreshAccessToken(refreshToken));
-                }
-                response = spec.retrieve().toEntity(JsonNode.class);
-            } else {
-                var spec = restClient.post()
-                        .uri(finalUrl)
-                        .header(HttpHeaders.USER_AGENT, userAgent)
-                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                        .body(formData != null ? formData : new LinkedMultiValueMap<>());
-                if (finalUrl.contains("oauth.reddit.com")) {
-                    spec = spec.header(HttpHeaders.AUTHORIZATION,
-                            "bearer " + refreshAccessToken(refreshToken));
-                }
-                response = spec.retrieve().toEntity(JsonNode.class);
+            RestClient.RequestHeadersSpec<?> spec = "GET".equalsIgnoreCase(method)
+                    ? restClient.get().uri(finalUrl)
+                    : restClient.post()
+                            .uri(finalUrl)
+                            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                            .body(formData != null ? formData : new LinkedMultiValueMap<>());
+
+            spec = spec.header(HttpHeaders.USER_AGENT, userAgent);
+            // Only oauth.reddit.com endpoints take (or need) the bearer token
+            if (finalUrl.contains("oauth.reddit.com")) {
+                spec = spec.header(HttpHeaders.AUTHORIZATION,
+                        "bearer " + refreshAccessToken(refreshToken));
             }
+            ResponseEntity<JsonNode> response = spec.retrieve().toEntity(JsonNode.class);
 
             updateRateLimits(response.getHeaders());
             return response.getBody() != null ? response.getBody()

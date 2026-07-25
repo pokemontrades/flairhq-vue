@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { apiFetch, API_BASE } from '../lib/apiFetch'
+import { apiJson } from '../lib/apiFetch'
 import BaseModal from './BaseModal.vue'
 
 const props = defineProps<{
@@ -36,20 +36,13 @@ function close() { emit('update:modelValue', false) }
 async function save() {
   saving.value = true
   error.value  = null
+  const payload = {
+    intro:       localIntro.value,
+    friendCodes: localFcs.value.filter(fc => fc.trim()),
+  }
   try {
-    const res = await apiFetch(`${API_BASE}/api/users/me`, {
-      method:  'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        intro:       localIntro.value,
-        friendCodes: localFcs.value.filter(fc => fc.trim()),
-      }),
-    })
-    if (!res.ok) throw new Error(`${res.status}`)
-    emit('saved', {
-      intro:       localIntro.value,
-      friendCodes: localFcs.value.filter(fc => fc.trim()),
-    })
+    await apiJson('/api/users/me', { method: 'PUT', json: payload })
+    emit('saved', payload)
     close()
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Save failed'

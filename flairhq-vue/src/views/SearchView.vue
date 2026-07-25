@@ -2,7 +2,7 @@
 import { ref, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useSearchStore } from '../stores/search'
-import { REFERENCE_CATEGORIES } from '../stores/references'
+import { referenceTypeLabel } from '../stores/references'
 import type { SearchType, ModmailResult } from '../stores/search'
 import { formatDate } from '../lib/format'
 import BaseModal from '../components/BaseModal.vue'
@@ -20,10 +20,6 @@ function run() {
 
 onMounted(run)
 watch(() => route.query, run)
-
-function labelFor(type: string) {
-  return REFERENCE_CATEGORIES.find(c => c.type === type)?.label ?? type
-}
 </script>
 
 <template>
@@ -67,7 +63,7 @@ function labelFor(type: string) {
         >
           <span class="result-primary">u/{{ ref.user }}</span>
           <span v-if="ref.user2" class="result-secondary">and u/{{ ref.user2 }}</span>
-          <span class="result-secondary">{{ labelFor(ref.type) }}</span>
+          <span class="result-secondary">{{ referenceTypeLabel(ref.type) }}</span>
           <span v-if="ref.gave || ref.got" class="result-trade">
             {{ ref.gave }} → {{ ref.got }}
           </span>

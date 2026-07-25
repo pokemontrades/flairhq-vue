@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
-import { apiFetch, API_BASE } from '../lib/apiFetch'
+import { apiJson } from '../lib/apiFetch'
 import { withLoading } from '../composables/useAsyncLoad'
 
 export type ReferenceType =
@@ -46,6 +46,25 @@ export const ADDABLE_REFERENCE_CATEGORIES = REFERENCE_CATEGORIES.filter(
   c => c.type !== 'egg' && c.type !== 'eggcheck'
 )
 
+/** Display label for a reference type, falling back to the raw type string. */
+export function referenceTypeLabel(type: string): string {
+  return REFERENCE_CATEGORIES.find(c => c.type === type)?.label ?? type
+}
+
+/**
+ * Extracts a canonical comparison key from a Reddit permalink so that two references
+ * for the same trade can be matched even when their URLs differ cosmetically.
+ * Mirrors UrlNormalizer.permalinkBase in the API.
+ *
+ * Strips query params, then returns the URL up to and including the comment ID
+ * (2nd segment after /comments/) when present; otherwise up to the post ID only.
+ * Non-Reddit URLs (no /comments/ segment) are returned as-is.
+ *
+ * Examples:
+ *   .../comments/abc123/title-slug/xyz789/  →  .../comments/abc123/title-slug/xyz789/
+ *   .../comments/abc123/title-slug/         →  .../comments/abc123/
+ *   .../comments/abc123/                    →  .../comments/abc123/
+ */
 function permalinkBase(url: string | null | undefined): string | null {
   if (!url) return null
   const s = url.includes('?') ? url.substring(0, url.indexOf('?')) : url
@@ -88,19 +107,34 @@ export const useReferenceStore = defineStore('references', () => {
 
   const rejectedRefs = computed(() => references.value.filter(r => r.rejected))
 
+  /** Swaps the matching reference in the list with the server's updated copy. */
+  function replaceRef(updated: Reference) {
+    references.value = references.value.map(r => r.id === updated.id ? updated : r)
+  }
+
+  /** POSTs a mod action for one reference and applies the returned update locally. */
+  async function postAction(id: string, action: string, body?: unknown): Promise<Reference> {
+    const updated = await apiJson<Reference>(`/api/references/${id}/${action}`, {
+      method: 'POST',
+      ...(body !== undefined ? { json: body } : {}),
+    })
+    replaceRef(updated)
+    return updated
+  }
+
   async function load(username: string) {
     references.value = []
     await withLoading(loading, error, async () => {
-      const firstRes = await apiFetch(`${API_BASE}/api/references?user=${encodeURIComponent(username)}&page=0&size=200`)
-      if (!firstRes.ok) throw new Error(`${firstRes.status}`)
-      const firstPage = await firstRes.json()
+      const pageUrl = (page: number) =>
+        `/api/references?user=${encodeURIComponent(username)}&page=${page}&size=200`
+
+      // Fetch page 0 first to learn the total, then fan out the rest in parallel.
+      const firstPage = await apiJson<{ items: Reference[]; totalPages: number }>(pageUrl(0))
       references.value = firstPage.items
 
       if (firstPage.totalPages > 1) {
         const remaining = Array.from({ length: firstPage.totalPages - 1 }, (_, i) =>
-          apiFetch(`${API_BASE}/api/references?user=${encodeURIComponent(username)}&page=${i + 1}&size=200`)
-            .then(r => r.ok ? r.json() : Promise.reject(new Error(`${r.status}`)))
-            .then(p => p.items as Reference[])
+          apiJson<{ items: Reference[] }>(pageUrl(i + 1)).then(p => p.items)
         )
         const pages = await Promise.all(remaining)
         references.value = [...references.value, ...pages.flat()]
@@ -109,10 +143,10 @@ export const useReferenceStore = defineStore('references', () => {
   }
 
   async function approve(id: string) {
-    const res = await apiFetch(`${API_BASE}/api/references/${id}/approve`, { method: 'POST' })
-    if (!res.ok) throw new Error(`${res.status}`)
-    const updated: Reference = await res.json()
-    references.value = references.value.map(r => r.id === updated.id ? updated : r)
+    const updated = await postAction(id, 'approve')
+
+    // When approval verified the trade, the server also verified the partner's
+    // reciprocal reference — mirror that on any matching local copy.
     if (updated.verified) {
       const updatedBase = permalinkBase(updated.url)
       references.value = references.value.map(r => {
@@ -127,67 +161,38 @@ export const useReferenceStore = defineStore('references', () => {
   }
 
   async function unapprove(id: string) {
-    const res = await apiFetch(`${API_BASE}/api/references/${id}/unapprove`, { method: 'POST' })
-    if (!res.ok) throw new Error(`${res.status}`)
-    const updated: Reference = await res.json()
-    references.value = references.value.map(r => r.id === updated.id ? updated : r)
+    await postAction(id, 'unapprove')
   }
 
   async function reject(id: string, reason?: string) {
-    const res = await apiFetch(`${API_BASE}/api/references/${id}/reject`, {
-      method: 'POST',
-      headers: reason ? { 'Content-Type': 'application/json' } : {},
-      body: reason ? JSON.stringify({ reason }) : undefined,
-    })
-    if (!res.ok) throw new Error(`${res.status}`)
-    const updated: Reference = await res.json()
-    references.value = references.value.map(r => r.id === updated.id ? updated : r)
+    await postAction(id, 'reject', reason ? { reason } : undefined)
   }
 
   async function setPending(id: string) {
-    const res = await apiFetch(`${API_BASE}/api/references/${id}/pending`, { method: 'POST' })
-    if (!res.ok) throw new Error(`${res.status}`)
-    const updated: Reference = await res.json()
-    references.value = references.value.map(r => r.id === updated.id ? updated : r)
+    await postAction(id, 'pending')
   }
 
   async function markMustFix(id: string, reason: string) {
-    const res = await apiFetch(`${API_BASE}/api/references/${id}/must-fix`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ reason: reason || null }),
-    })
-    if (!res.ok) throw new Error(`${res.status}`)
-    const updated: Reference = await res.json()
-    references.value = references.value.map(r => r.id === updated.id ? updated : r)
+    await postAction(id, 'must-fix', { reason: reason || null })
   }
 
   async function update(id: string, body: {
     url?: string; user2?: string; gave?: string; got?: string
     description?: string; type?: string; notes?: string; privateNotes?: string; number?: number
   }) {
-    const res = await apiFetch(`${API_BASE}/api/references/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    })
-    if (!res.ok) throw new Error(`${res.status}`)
-    const updated: Reference = await res.json()
-    references.value = references.value.map(r => r.id === updated.id ? updated : r)
+    const updated = await apiJson<Reference>(`/api/references/${id}`, { method: 'PUT', json: body })
+    replaceRef(updated)
     return updated
   }
 
   async function loadPendingReciprocal() {
     try {
-      const res = await apiFetch(`${API_BASE}/api/references/pending-reciprocal`)
-      if (!res.ok) return
-      pendingReciprocal.value = await res.json()
+      pendingReciprocal.value = await apiJson<Reference[]>('/api/references/pending-reciprocal')
     } catch { /* non-critical */ }
   }
 
   async function remove(id: string) {
-    const res = await apiFetch(`${API_BASE}/api/references/${id}/remove`, { method: 'POST' })
-    if (!res.ok) throw new Error(`${res.status}`)
+    await apiJson(`/api/references/${id}/remove`, { method: 'POST' })
     references.value = references.value.filter(r => r.id !== id)
   }
 

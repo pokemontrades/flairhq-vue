@@ -3,9 +3,9 @@ import { ref, computed, onMounted } from 'vue'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import { useAuthStore } from '../stores/auth'
-import { apiFetch, API_BASE } from '../lib/apiFetch'
+import { apiJson } from '../lib/apiFetch'
 import { formatDate } from '../lib/format'
-import Pagination from './Pagination.vue'
+import PaginationBar from './PaginationBar.vue'
 
 interface Comment {
   id: string
@@ -53,9 +53,7 @@ async function load() {
   loading.value = true
   error.value = null
   try {
-    const res = await apiFetch(`${API_BASE}/api/comments?user=${encodeURIComponent(props.profileUser)}`)
-    if (!res.ok) throw new Error(`${res.status}`)
-    comments.value = await res.json()
+    comments.value = await apiJson<Comment[]>(`/api/comments?user=${encodeURIComponent(props.profileUser)}`)
   } catch {
     error.value = 'Failed to load comments.'
   } finally {
@@ -69,13 +67,10 @@ async function postComment() {
   posting.value = true
   error.value = null
   try {
-    const res = await apiFetch(`${API_BASE}/api/comments`, {
+    const created = await apiJson<Comment>('/api/comments', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user: props.profileUser, message: text }),
+      json: { user: props.profileUser, message: text },
     })
-    if (!res.ok) throw new Error(`${res.status}`)
-    const created: Comment = await res.json()
     comments.value = [...comments.value, created]
     currentPage.value = totalPages.value
     msgText.value = ''
@@ -90,8 +85,7 @@ async function postComment() {
 async function deleteComment(id: string) {
   deleting.value.push(id)
   try {
-    const res = await apiFetch(`${API_BASE}/api/comments/${encodeURIComponent(id)}`, { method: 'DELETE' })
-    if (!res.ok) throw new Error(`${res.status}`)
+    await apiJson(`/api/comments/${encodeURIComponent(id)}`, { method: 'DELETE' })
     comments.value = comments.value.filter(c => c.id !== id)
   } catch {
     error.value = 'Failed to delete comment.'
@@ -129,7 +123,7 @@ function canDelete(comment: Comment) {
       </li>
     </ul>
 
-    <Pagination
+    <PaginationBar
       v-if="comments.length > PAGE_SIZE"
       v-model="currentPage"
       :total="totalPages"

@@ -42,14 +42,42 @@ public class ReferenceProcessor {
         this.urlNormalizer       = urlNormalizer;
     }
 
-    public PagedResponse<ReferenceResponse> getByUser(String username, String requestingUser, int page, int size) {
-        Set<String> approvedPartnerUrlBases = referenceRepository.findByUser2(username).stream()
-                .filter(r -> Boolean.TRUE.equals(r.getApproved()))
+    /** Loads a reference or throws 404. */
+    private Reference findRefOr404(@NonNull String id) {
+        return referenceRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    }
+
+    /** Persists the reference and maps it to a response (with private fields included). */
+    private ReferenceResponse saveAndRespond(Reference ref) {
+        ref.setUpdatedAt(Instant.now());
+        return referenceMapper.toResponse(referenceRepository.save(ref), true);
+    }
+
+    /** Canonical permalink comparison key for a raw URL, or null if there is none. */
+    private String normalizedBase(String url) {
+        return url != null ? UrlNormalizer.permalinkBase(urlNormalizer.normalize(url)) : null;
+    }
+
+    /** Permalink bases of the given references' URLs (nulls dropped). */
+    private Set<String> permalinkBases(List<Reference> refs) {
+        return refs.stream()
                 .map(Reference::getUrl)
-                .filter(Objects::nonNull)
-                .map(url -> UrlNormalizer.permalinkBase(urlNormalizer.normalize(url)))
+                .map(this::normalizedBase)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
+    }
+
+    /**
+     * Returns one page of a user's references. Each item is flagged {@code reciprocalApproved}
+     * when the partner has an approved reference for the same trade (matched by permalink base),
+     * which the UI uses to badge references awaiting this side's mod approval.
+     */
+    public PagedResponse<ReferenceResponse> getByUser(String username, String requestingUser, int page, int size) {
+        Set<String> approvedPartnerUrlBases = permalinkBases(
+                referenceRepository.findByUser2(username).stream()
+                        .filter(r -> Boolean.TRUE.equals(r.getApproved()))
+                        .toList());
 
         Page<Reference> refPage = referenceRepository.findByUser(
                 username, PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt")));
@@ -57,8 +85,7 @@ public class ReferenceProcessor {
         List<ReferenceResponse> items = refPage.getContent().stream()
                 .map(ref -> {
                     boolean reciprocalApproved = ref.getUrl() != null &&
-                            approvedPartnerUrlBases.contains(
-                                    UrlNormalizer.permalinkBase(urlNormalizer.normalize(ref.getUrl())));
+                            approvedPartnerUrlBases.contains(normalizedBase(ref.getUrl()));
                     return referenceMapper.toResponse(ref, ref.getUser().equals(requestingUser))
                             .toBuilder().reciprocalApproved(reciprocalApproved).build();
                 })
@@ -68,8 +95,9 @@ public class ReferenceProcessor {
     }
 
     /**
-     * Handles adding of a reference to user's profile.
-     * 
+     * Handles adding of a reference to the user's profile. Rejects duplicates both by exact
+     * normalized URL and by permalink base (same trade linked via post vs. comment URL).
+     *
      * @param request
      * @param username
      * @return
@@ -83,30 +111,14 @@ public class ReferenceProcessor {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A reference with that URL already exists.");
         }
         String newBase = UrlNormalizer.permalinkBase(normalizedUrl);
-        if (newBase != null) {
-            boolean duplicateBase = referenceRepository.findByUser(username).stream()
-                    .map(Reference::getUrl)
-                    .filter(Objects::nonNull)
-                    .map(url -> UrlNormalizer.permalinkBase(urlNormalizer.normalize(url)))
-                    .filter(Objects::nonNull)
-                    .anyMatch(newBase::equals);
-            if (duplicateBase) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You already have a reference for this trade.");
-            }
+        if (newBase != null && permalinkBases(referenceRepository.findByUser(username)).contains(newBase)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You already have a reference for this trade.");
         }
         request.setUrl(normalizedUrl);
         Reference saved = referenceRepository.save(Objects.requireNonNull(referenceMapper.toDocument(request, username)));
         return referenceMapper.toResponse(saved, true);
     }
 
-    /**
-     * Handles editing of an existing reference.
-     * 
-     * @param id
-     * @param request
-     * @param username
-     * @return
-     */
     private void validateUrl(String url) {
         if (url == null || url.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "URL is required");
@@ -116,6 +128,11 @@ public class ReferenceProcessor {
         }
     }
 
+    /**
+     * Validates the type-dependent required fields. Mirrors the visibility rules in the
+     * frontend's useReferenceForm composable: giveaways need a description and count,
+     * involvement/misc need a partner and description, everything else partner + gave/got.
+     */
     private void validateRequest(ReferenceRequest request) {
         String type = request.getType();
         if (type == null || type.isBlank()) {
@@ -148,11 +165,15 @@ public class ReferenceProcessor {
         }
     }
 
+    /**
+     * Handles editing of an existing reference by its owner. Any edit clears approval/verification
+     * (the reference must be re-reviewed); edits to substantive trade fields also clear must-fix,
+     * since the user has presumably addressed the issue.
+     */
     public ReferenceResponse edit(String id, ReferenceRequest request, String username) {
         validateUrl(request.getUrl());
         validateRequest(request);
-        Reference ref = referenceRepository.findById(Objects.requireNonNull(id))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        Reference ref = findRefOr404(Objects.requireNonNull(id));
         if (!ref.getUser().equals(username)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
@@ -173,13 +194,11 @@ public class ReferenceProcessor {
             ref.setMustFix(false);
             ref.setMustFixReason(null);
         }
-        ref.setUpdatedAt(Instant.now());
-        return referenceMapper.toResponse(referenceRepository.save(ref), true);
+        return saveAndRespond(ref);
     }
 
     public void delete(@NonNull String id, String username) {
-        Reference ref = referenceRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        Reference ref = findRefOr404(id);
         if (!ref.getUser().equals(username)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
@@ -191,37 +210,33 @@ public class ReferenceProcessor {
 
     /**
      * Moderator function to set a reference back to pending status, removing any approval, rejection, or must-fix flags.
-     * 
+     *
      * @param id
      * @return
      */
     public ReferenceResponse setPending(@NonNull String id) {
-        Reference ref = referenceRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        Reference ref = findRefOr404(id);
         ref.setMustFix(false);
         ref.setMustFixReason(null);
         ref.setRejected(false);
         ref.setRejectedReason(null);
         ref.setApproved(false);
         ref.setVerified(false);
-        ref.setUpdatedAt(Instant.now());
-        return referenceMapper.toResponse(referenceRepository.save(ref), true);
+        return saveAndRespond(ref);
     }
 
     /**
      * Moderator function to mark a reference as must fix with an optional reason.
-     * 
+     *
      * @param id
      * @param reason
      * @return
      */
     public ReferenceResponse markMustFix(@NonNull String id, String reason) {
-        Reference ref = referenceRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        Reference ref = findRefOr404(id);
         ref.setMustFix(true);
         ref.setMustFixReason(reason != null && !reason.isBlank() ? reason.strip() : null);
-        ref.setUpdatedAt(Instant.now());
-        return referenceMapper.toResponse(referenceRepository.save(ref), true);
+        return saveAndRespond(ref);
     }
 
     public void remove(@NonNull String id) {
@@ -233,38 +248,34 @@ public class ReferenceProcessor {
 
     /**
      * Moderator function to unapprove a reference.
-     * 
+     *
      * @param id
      * @param moderator
      * @return
      */
     public ReferenceResponse unapprove(@NonNull String id, @NonNull String moderator) {
-        Reference ref = referenceRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        Reference ref = findRefOr404(id);
         if (moderator.equalsIgnoreCase(ref.getUser())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Moderators cannot unapprove references on their own profile");
         }
         ref.setApproved(false);
         ref.setVerified(false);
-        ref.setUpdatedAt(Instant.now());
-        return referenceMapper.toResponse(referenceRepository.save(ref), true);
+        return saveAndRespond(ref);
     }
 
     /**
      * Moderator function to reject a reference with an optional reason.
-     * 
+     *
      * @param id
      * @param reason
      * @return
      */
     public ReferenceResponse reject(@NonNull String id, String reason) {
-        Reference ref = referenceRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        Reference ref = findRefOr404(id);
         ref.setRejected(true);
         ref.setRejectedReason(reason != null && !reason.isBlank() ? reason.strip() : null);
         ref.setApproved(false);
-        ref.setUpdatedAt(Instant.now());
-        return referenceMapper.toResponse(referenceRepository.save(ref), true);
+        return saveAndRespond(ref);
     }
 
     public Map<String, Long> getApprovedCountsByType(String username) {
@@ -276,25 +287,20 @@ public class ReferenceProcessor {
     }
 
     /**
-     * Returns all references where the user is the "other" trader.
-     * 
+     * Returns approved references naming the user as the "other" trader for which the user
+     * has not yet logged their own side (matched by permalink base) — i.e. the trades the UI
+     * prompts them to add a reciprocal reference for.
+     *
      * @param username
      * @return
      */
     public List<ReferenceResponse> getPendingReciprocal(String username) {
-        Set<String> existingBases = referenceRepository.findByUser(username).stream()
-                .map(Reference::getUrl)
-                .filter(Objects::nonNull)
-                .map(urlNormalizer::normalize)
-                .map(UrlNormalizer::permalinkBase)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
+        Set<String> existingBases = permalinkBases(referenceRepository.findByUser(username));
 
         return referenceRepository.findByUser2(username).stream()
                 .filter(ref -> Boolean.TRUE.equals(ref.getApproved()))
                 .filter(ref -> {
-                    if (ref.getUrl() == null) return true;
-                    String base = UrlNormalizer.permalinkBase(urlNormalizer.normalize(ref.getUrl()));
+                    String base = normalizedBase(ref.getUrl());
                     return base == null || !existingBases.contains(base);
                 })
                 .map(ref -> referenceMapper.toResponse(ref, false))
@@ -308,14 +314,13 @@ public class ReferenceProcessor {
      * Marks a reference as approved. Moderators may not approve their own trades (either as the
      * submitter or the counter-party). After approval, if the reference type is verifiable and a
      * matching approved reciprocal exists at the same permalink base, both sides are marked verified.
-     * 
+     *
      * @param id
      * @param moderator
      * @return
      */
     public ReferenceResponse approve(@NonNull String id, @NonNull String moderator) {
-        Reference ref = referenceRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        Reference ref = findRefOr404(id);
 
         if (moderator.equalsIgnoreCase(ref.getUser()) || moderator.equalsIgnoreCase(ref.getUser2())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Moderators cannot approve their own trades");
@@ -324,19 +329,17 @@ public class ReferenceProcessor {
         ref.setApproved(true);
         ref.setMustFix(false);
         ref.setMustFixReason(null);
-        ref.setUpdatedAt(Instant.now());
 
-        if (VERIFIABLE_TYPES.contains(ref.getType()) && ref.getUrl() != null) {
-            String refBase = UrlNormalizer.permalinkBase(urlNormalizer.normalize(ref.getUrl()));
+        String refBase = normalizedBase(ref.getUrl());
+        if (VERIFIABLE_TYPES.contains(ref.getType()) && refBase != null) {
             referenceRepository.findByUserAndUser2(ref.getUser2(), ref.getUser()).stream()
                     .filter(other -> VERIFIABLE_TYPES.contains(other.getType()))
-                    .filter(other -> other.getUrl() != null &&
-                            refBase.equals(UrlNormalizer.permalinkBase(urlNormalizer.normalize(other.getUrl()))))
+                    .filter(other -> refBase.equals(normalizedBase(other.getUrl())))
                     .findFirst()
                     .ifPresent(other -> markVerifiedPair(ref, other));
         }
 
-        return referenceMapper.toResponse(referenceRepository.save(ref), true);
+        return saveAndRespond(ref);
     }
 
     private void markVerifiedPair(Reference ref, Reference other) {

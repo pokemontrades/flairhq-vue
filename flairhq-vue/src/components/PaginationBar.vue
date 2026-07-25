@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const props = defineProps<{ modelValue: number; total: number }>()
+defineProps<{ modelValue: number; total: number }>()
 const emit = defineEmits<{ (e: 'update:modelValue', v: number): void }>()
 </script>
 

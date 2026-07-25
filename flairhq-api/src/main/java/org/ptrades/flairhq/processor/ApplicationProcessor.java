@@ -60,16 +60,24 @@ public class ApplicationProcessor {
     }
 
     /**
+     * The number of approved trades this flair requires, or 0 when the flair has no
+     * trade threshold (e.g. involvement flairs) or no config exists for it.
+     */
+    private int requiredTrades(String flair, String sub) {
+        Flair flairConfig = flairRepository.findByNameAndSub(flair, sub);
+        return flairConfig != null ? flairConfig.getTrades() : 0;
+    }
+
+    /**
      * Fetches all pending flair applications with calculated approved trade counts and required thresholds for each application.
-     * 
+     *
      * @return
      */
     public List<ApplicationResponse> getApplications() {
         return applicationRepository.findAll().stream()
                 .map(app -> {
                     int approvedTrades = (int) referenceRepository.countByUserAndApprovedTrue(app.getUser());
-                    Flair flairConfig  = flairRepository.findByNameAndSub(app.getFlair(), app.getSub());
-                    int requiredTrades = flairConfig != null ? flairConfig.getTrades() : 0;
+                    int requiredTrades = requiredTrades(app.getFlair(), app.getSub());
                     return ApplicationResponse.builder()
                             .id(app.getId())
                             .user(app.getUser())
@@ -166,14 +174,9 @@ public class ApplicationProcessor {
         applicationRepository.deleteById(id);
 
         // Soft-deny remaining apps of the same type: trade flairs don't cancel involvement apps and vice versa.
-        Flair approvedConfig = flairRepository.findByNameAndSub(app.getFlair(), app.getSub());
-        boolean approvedIsInvolvement = approvedConfig == null || approvedConfig.getTrades() == 0;
+        boolean approvedIsInvolvement = requiredTrades(app.getFlair(), app.getSub()) == 0;
         List<Application> remaining = applicationRepository.findByUser(app.getUser()).stream()
-                .filter(a -> {
-                    Flair otherConfig = flairRepository.findByNameAndSub(a.getFlair(), a.getSub());
-                    boolean otherIsInvolvement = otherConfig == null || otherConfig.getTrades() == 0;
-                    return approvedIsInvolvement == otherIsInvolvement;
-                })
+                .filter(a -> (requiredTrades(a.getFlair(), a.getSub()) == 0) == approvedIsInvolvement)
                 .toList();
         if (!remaining.isEmpty()) {
             log.info("Soft-denying {} remaining application(s) for user='{}'", remaining.size(), app.getUser());
@@ -350,15 +353,13 @@ public class ApplicationProcessor {
      * Involvement flairs (trades == 0) are exempt and can always be approved.
      */
     private void checkNoHigherFlairPending(String id, Application app) {
-        Flair flairConfig = flairRepository.findByNameAndSub(app.getFlair(), app.getSub());
-        int appTrades = flairConfig != null ? flairConfig.getTrades() : 0;
+        int appTrades = requiredTrades(app.getFlair(), app.getSub());
         if (appTrades == 0) return;
 
         applicationRepository.findByUser(app.getUser()).stream()
                 .filter(a -> !a.getId().equals(id))
                 .forEach(other -> {
-                    Flair otherConfig = flairRepository.findByNameAndSub(other.getFlair(), other.getSub());
-                    int otherTrades = otherConfig != null ? otherConfig.getTrades() : 0;
+                    int otherTrades = requiredTrades(other.getFlair(), other.getSub());
                     if (otherTrades > appTrades) {
                         log.warn("Approval blocked — user='{}' flair='{}' trades={} < pending flair='{}' trades={}",
                                 app.getUser(), app.getFlair(), appTrades, other.getFlair(), otherTrades);
