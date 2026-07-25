@@ -13,6 +13,7 @@ public class UserResponse {
 
     private String id;
     private String iconImg;
+    private Instant redditAccountCreatedAt;
     private UserFlair flair;
     private Boolean isMod;
     private String[] modPermissions;

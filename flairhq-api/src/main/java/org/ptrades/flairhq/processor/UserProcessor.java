@@ -66,12 +66,22 @@ public class UserProcessor {
     public Optional<UserResponse> getUser(String username) {
         return userRepository.findById(Objects.requireNonNull(username))
                 .map(user -> {
-                    if (user.getIconImg() == null) {
-                        String iconImg = redditApiService.getUserIconImg(username);
-                        if (iconImg != null) {
-                            user.setIconImg(iconImg);
-                            user.setUpdatedAt(Instant.now());
-                            userRepository.save(user);
+                    if (user.getIconImg() == null || user.getRedditAccountCreatedAt() == null) {
+                        RedditApiService.RedditAbout about = redditApiService.getUserAbout(username);
+                        if (about != null) {
+                            boolean changed = false;
+                            if (user.getIconImg() == null && about.iconImg() != null) {
+                                user.setIconImg(about.iconImg());
+                                changed = true;
+                            }
+                            if (user.getRedditAccountCreatedAt() == null && about.createdAt() != null) {
+                                user.setRedditAccountCreatedAt(about.createdAt());
+                                changed = true;
+                            }
+                            if (changed) {
+                                user.setUpdatedAt(Instant.now());
+                                userRepository.save(user);
+                            }
                         }
                     }
                     return userMapper.toResponse(user);

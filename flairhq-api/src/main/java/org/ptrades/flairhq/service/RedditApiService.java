@@ -77,12 +77,15 @@ public class RedditApiService {
         return adminRefreshToken;
     }
 
+    /** Avatar URL and Reddit account creation time from a user's public "about" info. */
+    public record RedditAbout(String iconImg, Instant createdAt) {}
+
     /**
-     * Fetches a user's avatar URL from Reddit's public API.
+     * Fetches a user's avatar URL and account creation time from Reddit's public API.
      * Uses raw_json=1 to avoid &amp; HTML entity encoding in the returned URL.
-     * Returns null if the user doesn't exist or has no avatar.
+     * Returns null if the user doesn't exist or the request fails.
      */
-    public String getUserIconImg(String username) {
+    public RedditAbout getUserAbout(String username) {
         try {
             JsonNode body = restClient.get()
                     .uri(API_BASE + "/user/" + username + "/about.json?raw_json=1")
@@ -90,8 +93,13 @@ public class RedditApiService {
                     .retrieve()
                     .body(JsonNode.class);
             if (body == null) return null;
-            String iconImg = body.path("data").path("icon_img").asText(null);
-            return (iconImg != null && !iconImg.isBlank()) ? iconImg : null;
+            JsonNode data = body.path("data");
+            String iconImg = data.path("icon_img").asText(null);
+            iconImg = (iconImg != null && !iconImg.isBlank()) ? iconImg : null;
+            Instant createdAt = data.hasNonNull("created_utc")
+                    ? Instant.ofEpochSecond(data.path("created_utc").asLong())
+                    : null;
+            return new RedditAbout(iconImg, createdAt);
         } catch (Exception e) {
             return null;
         }

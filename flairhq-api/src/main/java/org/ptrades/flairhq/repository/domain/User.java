@@ -18,6 +18,7 @@ public class User {
 
     private String redToken;
     private String iconImg;
+    private Instant redditAccountCreatedAt;
     private UserFlair flair;
     private String[] modPermissions; // test around this
     private String[] loggedFriendCodes; // test around this

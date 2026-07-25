@@ -25,6 +25,7 @@ interface UserProfile {
   flairText: string | null
   flairCssClass: string | null
   hideReciprocalSection: boolean
+  redditAccountCreatedAt: string | null
 }
 
 /** Shape of the relevant fields in the /api/users responses. */
@@ -33,8 +34,12 @@ interface UserDto {
   intro?: string | null
   friendCodes?: string[]
   hideReciprocalSection?: boolean
+  redditAccountCreatedAt?: string | null
   flair?: { ptrades?: { flairText?: string | null; flairCssClass?: string | null } }
 }
+
+/** Minimum Reddit account age, in days, required to show the "Join Discord" button. */
+const MIN_ACCOUNT_AGE_DAYS_FOR_DISCORD = 15
 
 const route           = useRoute()
 const router          = useRouter()
@@ -45,7 +50,7 @@ const reasonStore     = useRejectionReasonStore()
 const username     = computed(() => (route.params.username as string) || auth.user!.name)
 const isOwnProfile = computed(() => username.value === auth.user?.name)
 
-const userProfile        = ref<UserProfile>({ iconImg: null, intro: null, friendCodes: [], flairText: null, flairCssClass: null, hideReciprocalSection: false })
+const userProfile        = ref<UserProfile>({ iconImg: null, intro: null, friendCodes: [], flairText: null, flairCssClass: null, hideReciprocalSection: false, redditAccountCreatedAt: null })
 const introEl            = ref<HTMLElement | null>(null)
 const introExpanded      = ref(false)
 const introOverflows     = ref(false)
@@ -101,6 +106,7 @@ async function loadProfile(name: string, own: boolean) {
       flairText:              data.flair?.ptrades?.flairText ?? null,
       flairCssClass:          data.flair?.ptrades?.flairCssClass ?? null,
       hideReciprocalSection:  data.hideReciprocalSection ?? false,
+      redditAccountCreatedAt: data.redditAccountCreatedAt ?? null,
     }
     initOpenSections()
   } catch { /* non-critical — profile display degrades gracefully */ }
@@ -117,6 +123,13 @@ onMounted(async () => {
 onUnmounted(() => document.removeEventListener('click', closeMenu))
 
 const isMod     = computed(() => auth.effectiveIsMod)
+
+const isRedditAccountOldEnoughForDiscord = computed(() => {
+  const createdAt = userProfile.value.redditAccountCreatedAt
+  if (!createdAt) return false
+  const ageMs = Date.now() - new Date(createdAt).getTime()
+  return ageMs >= MIN_ACCOUNT_AGE_DAYS_FOR_DISCORD * 24 * 60 * 60 * 1000
+})
 
 const addableTypes = new Set(ADDABLE_REFERENCE_CATEGORIES.map(c => c.type))
 const addablePendingReciprocal = computed(() =>
@@ -201,7 +214,7 @@ watch(() => userProfile.value.intro, async () => {
 
 watch(username, async (newUsername) => {
   refStore.load(newUsername)
-  userProfile.value = { iconImg: null, intro: null, friendCodes: [], flairText: null, flairCssClass: null, hideReciprocalSection: false }
+  userProfile.value = { iconImg: null, intro: null, friendCodes: [], flairText: null, flairCssClass: null, hideReciprocalSection: false, redditAccountCreatedAt: null }
   await loadProfile(newUsername, newUsername === auth.user?.name)
 })
 
@@ -331,7 +344,7 @@ function onFlairTextSaved() {
             class="profile-flair-sprite"
           ></span>
           <a
-            v-if="isOwnProfile && userProfile.flairText"
+            v-if="isOwnProfile && userProfile.flairText && isRedditAccountOldEnoughForDiscord"
             :href="`${API_BASE}/api/discord/authorize`"
             class="btn-discord"
           >
