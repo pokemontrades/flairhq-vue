@@ -42,7 +42,8 @@ dependencies {
 	implementation("org.springframework.session:spring-session-data-mongodb")
 
 	// Swagger API documentation
-	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3")
+	// Stay on the 2.x line: springdoc 3.x targets Spring Boot 4, this project is on Boot 3.5.
+	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.17")
 
 	runtimeOnly("io.micrometer:micrometer-registry-prometheus")
 

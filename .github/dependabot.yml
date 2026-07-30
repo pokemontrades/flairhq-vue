@@ -5,9 +5,36 @@ updates:
     directory: "/flairhq-vue"
     schedule:
       interval: "weekly"
-      
+    # Majors are opt-in only. Auto-merged majors have already broken the build once:
+    # TypeScript 7 dropped the typescript/lib/tsc export that vue-tsc requires, and
+    # pinia 4 fell outside vue-router's peer range. Upgrade those deliberately.
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    # One PR per update type instead of one per dependency, so related bumps land
+    # together and a bad batch can be reverted as a unit.
+    groups:
+      npm-minor:
+        patterns: ["*"]
+        update-types: ["minor"]
+      npm-patch:
+        patterns: ["*"]
+        update-types: ["patch"]
+
   # Java Spring Boot Backend (Gradle)
   - package-ecosystem: "gradle"
     directory: "/flairhq-api"
     schedule:
       interval: "weekly"
+    # Same policy as above: springdoc-openapi 3.x targets Spring Boot 4 and broke the
+    # application context on this Boot 3.x project.
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    groups:
+      gradle-minor:
+        patterns: ["*"]
+        update-types: ["minor"]
+      gradle-patch:
+        patterns: ["*"]
+        update-types: ["patch"]
