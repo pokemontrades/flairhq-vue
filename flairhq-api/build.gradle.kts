@@ -42,7 +42,7 @@ dependencies {
 	implementation("org.springframework.session:spring-session-data-mongodb")
 
 	// Swagger API documentation
-	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.17")
+	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3")
 
 	runtimeOnly("io.micrometer:micrometer-registry-prometheus")
 
