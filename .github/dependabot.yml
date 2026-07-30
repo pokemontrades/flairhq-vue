@@ -6,8 +6,8 @@ updates:
     schedule:
       interval: "weekly"
       
-  # Java Spring Boot Backend (Maven)
-  - package-ecosystem: "maven"
+  # Java Spring Boot Backend (Gradle)
+  - package-ecosystem: "gradle"
     directory: "/flairhq-api"
     schedule:
       interval: "weekly"
