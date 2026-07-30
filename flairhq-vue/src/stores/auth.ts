@@ -1,5 +1,6 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
+import { apiFetch } from '../lib/apiFetch'
 
 export interface RedditUser {
   name: string
@@ -28,9 +29,9 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null
 
     try {
-      const res = await fetch(`${API_BASE}/api/auth/me`, {
-        credentials: 'include', // send the JSESSIONID cookie cross-origin
-      })
+      // Goes through apiFetch so the CSRF token from the response header is cached —
+      // this is the app's first API call, and mutations before it have no token to send.
+      const res = await apiFetch(`${API_BASE}/api/auth/me`)
 
       if (res.status === 401) {
         user.value = null
@@ -55,10 +56,9 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function logout() {
     try {
-      await fetch(`${API_BASE}/api/auth/logout`, {
-        method: 'POST',
-        credentials: 'include',
-      })
+      // Must go through apiFetch: Spring's CsrfFilter runs before LogoutFilter, so a
+      // POST without X-XSRF-TOKEN is rejected with 403 despite logout being permitAll.
+      await apiFetch(`${API_BASE}/api/auth/logout`, { method: 'POST' })
     } finally {
       clearSession()
     }
