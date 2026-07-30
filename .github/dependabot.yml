@@ -1,0 +1,13 @@
+version: 2
+updates:
+  # Vue.js Frontend (npm)
+  - package-ecosystem: "npm"
+    directory: "/flairhq-vue"
+    schedule:
+      interval: "weekly"
+      
+  # Java Spring Boot Backend (Maven)
+  - package-ecosystem: "maven"
+    directory: "/flairhq-api"
+    schedule:
+      interval: "weekly"
