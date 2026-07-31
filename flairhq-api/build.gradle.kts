@@ -29,6 +29,12 @@ repositories {
 extra["snippetsDir"] = file("build/generated-snippets")
 extra["springCloudVersion"] = "2025.0.0"
 
+// Security patches for transitive deps pinned by the Spring Boot 3.5.15 BOM.
+// Drop these once a Boot release ships the fixed versions itself.
+extra["jackson-bom.version"] = "2.21.5" // SNYK-JAVA-COMFASTERXMLJACKSONCORE-17972608
+extra["logback.version"] = "1.5.36" // SNYK-JAVA-CHQOSLOGBACK-17675439
+extra["tomcat.version"] = "10.1.56" // SNYK-JAVA-ORGAPACHETOMCATEMBED-17732890, -17733746
+
 dependencies {
 	// Spring Boot
 	implementation("org.springframework.boot:spring-boot-starter-actuator")
@@ -67,11 +73,18 @@ dependencyManagement {
 	imports {
 		mavenBom("org.springframework.cloud:spring-cloud-dependencies:${property("springCloudVersion")}")
 	}
+	// Entries here override the imported BOMs. Note that resolutionStrategy.force does NOT:
+	// the dependency-management plugin reapplies managed versions after forces are evaluated.
+	dependencies {
+		dependency("org.apache.commons:commons-lang3:3.20.0") // SNYK-JAVA-ORGAPACHECOMMONS-10734078
+		// Spring Cloud's BOM downgrades this below the version Boot manages.
+		dependency("org.springframework.retry:spring-retry:2.0.13") // SNYK-JAVA-ORGSPRINGFRAMEWORKRETRY-17260993
+	}
 }
 
 configurations.all {
 	resolutionStrategy {
-		force("org.apache.commons:commons-lang3:3.20.0")
+		// Unmanaged by any BOM, so a force is the right tool here.
 		force("org.bouncycastle:bcprov-jdk18on:1.85")
 	}
 }
