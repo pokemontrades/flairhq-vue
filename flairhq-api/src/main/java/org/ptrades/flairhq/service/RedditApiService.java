@@ -21,7 +21,7 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClient;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -110,6 +110,13 @@ public class RedditApiService {
      * Results are cached for 58 minutes (Reddit tokens last ~60 minutes).
      */
     public String refreshAccessToken(String refreshToken) {
+        // An unset or blank secret otherwise reaches Reddit and comes back as an opaque
+        // 400 invalid_grant, which reads like an API fault rather than a config one.
+        if (refreshToken == null || refreshToken.isBlank()) {
+            throw new RedditApiException(500, "No Reddit refresh token configured "
+                    + "(check reddit.admin-refresh-token / REDDIT_ADMIN_REFRESH_TOKEN)");
+        }
+
         TokenEntry cached = tokenCache.get(refreshToken);
         if (cached != null && Instant.now().isBefore(cached.expiresAt())) {
             return cached.accessToken();
@@ -122,14 +129,22 @@ public class RedditApiService {
         String credentials = Base64.getEncoder()
                 .encodeToString((clientId + ":" + clientSecret).getBytes());
 
-        JsonNode body = restClient.post()
-                .uri(TOKEN_URL)
-                .header(HttpHeaders.AUTHORIZATION, "Basic " + credentials)
-                .header(HttpHeaders.USER_AGENT, userAgent)
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .body(form)
-                .retrieve()
-                .body(JsonNode.class);
+        JsonNode body;
+        try {
+            body = restClient.post()
+                    .uri(TOKEN_URL)
+                    .header(HttpHeaders.AUTHORIZATION, "Basic " + credentials)
+                    .header(HttpHeaders.USER_AGENT, userAgent)
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .body(form)
+                    .retrieve()
+                    .body(JsonNode.class);
+        } catch (HttpStatusCodeException e) {
+            // Caught here rather than in execute(), which would otherwise report a failed token
+            // refresh as a failure of whichever endpoint happened to trigger it.
+            throw new RedditApiException(e.getStatusCode().value(),
+                    "Reddit token refresh failed: " + e.getStatusCode() + " — " + describeBody(e));
+        }
 
         if (body == null || !body.hasNonNull("access_token")) {
             throw new RedditApiException(502, "Error retrieving access token from Reddit");
@@ -374,10 +389,22 @@ public class RedditApiService {
             return response.getBody() != null ? response.getBody()
                     : com.fasterxml.jackson.databind.node.NullNode.getInstance();
 
-        } catch (HttpClientErrorException e) {
+        } catch (HttpStatusCodeException e) {
+            // Reddit puts the actual reason in the response body — keep it, or the caller is
+            // left guessing which of several possible failures produced a bare status code.
             throw new RedditApiException(e.getStatusCode().value(),
-                    "Reddit API error: " + e.getStatusCode());
+                    "Reddit API error: " + e.getStatusCode()
+                            + " on " + method.toUpperCase() + " " + url
+                            + " — " + describeBody(e));
         }
+    }
+
+    /** Reddit's error body, trimmed to something safe to put in a log line. */
+    private static String describeBody(HttpStatusCodeException e) {
+        String body = e.getResponseBodyAsString();
+        if (body == null || body.isBlank()) return "(empty response body)";
+        body = body.strip().replaceAll("\\s+", " ");
+        return body.length() > 300 ? body.substring(0, 300) + "…" : body;
     }
 
     private void updateRateLimits(HttpHeaders headers) {
