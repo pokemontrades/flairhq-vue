@@ -6,6 +6,8 @@ on:
     paths:
       - "flairhq-api/**"
       - ".github/workflows/api.yml"
+  # Run manually from any branch: Actions → API → Run workflow → pick a branch
+  workflow_dispatch:
 
 env:
   IMAGE: ghcr.io/${{ github.repository_owner }}/flairhq-api
@@ -51,14 +53,23 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # Only main moves the :latest tag; other branches publish under their own name
+      - name: Compute image tags
+        id: meta
+        run: |
+          BRANCH="${GITHUB_REF_NAME//\//-}"
+          if [ "$BRANCH" = "main" ]; then
+            echo "tags=${IMAGE}:latest,${IMAGE}:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tags=${IMAGE}:${BRANCH},${IMAGE}:${BRANCH}-${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
           context: ./flairhq-api
           push: true
-          tags: |
-            ${{ env.IMAGE }}:latest
-            ${{ env.IMAGE }}:${{ github.sha }}
+          tags: ${{ steps.meta.outputs.tags }}
 
   # ── Auto-deploy (disabled) ────────────────────────────────────────────────
   # To enable:
