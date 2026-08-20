@@ -1,7 +1,7 @@
 plugins {
     java
 
-	id("org.springframework.boot") version "3.5.15"
+	id("org.springframework.boot") version "3.5.16"
 	id("io.spring.dependency-management") version "1.1.7"
 	id("org.asciidoctor.jvm.convert") version "3.3.2"
 }
@@ -85,7 +85,7 @@ dependencyManagement {
 configurations.all {
 	resolutionStrategy {
 		// Unmanaged by any BOM, so a force is the right tool here.
-		force("org.bouncycastle:bcprov-jdk18on:1.85")
+		force("org.bouncycastle:bcprov-jdk18on:1.85.2")
 	}
 }
 
